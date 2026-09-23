@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, quantize_tensor
+from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, materialize_mixed_int4_input_attention_q_v_out_k, quantize_tensor
 
 SQUARES = "abcdefghi"
 MOVE_ORDER = "ebdfhcgia"
@@ -133,6 +133,63 @@ def qat_step(
 def batch_ranges(total: int, batch_size: int):
     for start in range(0, total, batch_size):
         yield start, min(total, start + batch_size)
+
+
+def run_mixed_int4_input_attention_k_qat(
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+) -> dict:
+    """Add only the K projection to the accepted Q/V/output INT4 stage."""
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts/mixed-int4-row-input-attention-q-v-out-targeted-100/artifacts-qat-mixed-int4-row-input-attention-q-v-out.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
+    model.attention.in_proj_weight.requires_grad_(True)
+    optimizer = torch.optim.AdamW((model.attention.in_proj_weight,), lr=0.0001, weight_decay=0.0001)
+    groups = frozenset({"q", "k", "v", "out"})
+    width = model.attention.embed_dim
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            loss = nn.functional.cross_entropy(model.forward_mixed_int4_input_attention_groups(inputs[index], groups), labels[index])
+            loss.backward()
+            with torch.no_grad():
+                model.attention.in_proj_weight.grad[:width].zero_()
+                model.attention.in_proj_weight.grad[2 * width:].zero_()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
+            progress = {"epoch": epoch, "layout": "mixed-int4-row-input-attention-q-v-out-k", "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "source_checkpoint": source.name, "trainable_tensor": "attention.in_proj_weight[K]"}
+            (output / "mixed-int4-row-input-attention-q-v-out-k-progress.json").write_text(json.dumps(progress, indent=2) + "\n")
+    checkpoint_path = output / "artifacts-qat-mixed-int4-row-input-attention-q-v-out-k.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "layout": "mixed-int4-row-input-attention-q-v-out-k", "source_checkpoint": source.name, "trainable_tensor": "attention.in_proj_weight[K]"}, checkpoint_path)
+    model = model.to(device)
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k(model)
+    report = {
+        "layout": "mixed-int4-row-input-attention-q-v-out-k",
+        "trainable_tensor": "attention.in_proj_weight[K]",
+        "qat_forward": evaluate(model, tokenizer, device, histories, attention_int4_groups=groups),
+        "materialized_mixed_int4_row_input_attention_q_v_out_k": evaluate(materialized, tokenizer, device, histories),
+        "source_checkpoint": source.name,
+    }
+    (output / "mixed-int4-row-input-attention-q-v-out-k-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 def run_mixed_int4_input_attention_out_qat(
