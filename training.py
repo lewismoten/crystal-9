@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 
 import torch
 from torch import nn
 
-from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, materialize_mixed_int4_input_attention_q_v_out_k, materialize_mixed_int4_input_attention_q_v_out_k_attention_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases_output_bias, materialize_mixed_int4_full_parameters, materialize_mixed_int4_full_parameters_grouped_norm_weight, quantize_tensor
+from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int3_suffix_output_bias_router_bias, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, materialize_mixed_int4_input_attention_q_v_out_k, materialize_mixed_int4_input_attention_q_v_out_k_attention_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases_output_bias, materialize_mixed_int4_full_parameters, materialize_mixed_int4_full_parameters_grouped_norm_weight, quantize_tensor
 
 SQUARES = "abcdefghi"
 MOVE_ORDER = "ebdfhcgia"
@@ -987,6 +988,68 @@ def run_qat(
         "source_checkpoint": source.name,
     }
     (output / f"qat-int{bits}-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
+def run_mixed_int3_suffix_output_bias_router_bias_qat(
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+    learning_rate: float = 0.0001,
+    seed: int = 20260938,
+) -> dict:
+    """Train only router.bias through the scoped INT3 router-bias layout."""
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root / "artifacts/int3-suffix-output-bias-router-bias-qat-200-seed20260938-lr1e-4"
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
+    model.router.bias.requires_grad_(True)
+    frozen_tensor_sha256 = {
+        name: hashlib.sha256(parameter.detach().cpu().contiguous().numpy().tobytes()).hexdigest()
+        for name, parameter in model.named_parameters() if name != "router.bias"
+    }
+    torch.manual_seed(seed)
+    optimizer = torch.optim.AdamW((model.router.bias,), lr=learning_rate, weight_decay=0.0001)
+    layout = "mixed-int3-suffix-output-bias-router-bias"
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            loss = nn.functional.cross_entropy(model.forward_mixed_int3_suffix_output_bias_router_bias(inputs[index]), labels[index])
+            loss.backward()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
+            (output / "progress.json").write_text(json.dumps({"epoch": epoch, "layout": layout, "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "source_checkpoint": str(source), "trainable_tensors": ["router.bias"], "seed": seed, "learning_rate": learning_rate}, indent=2) + "\n")
+    for name, parameter in model.named_parameters():
+        if name != "router.bias":
+            assert frozen_tensor_sha256[name] == hashlib.sha256(parameter.detach().cpu().contiguous().numpy().tobytes()).hexdigest(), name
+    checkpoint_path = output / "artifacts-qat-mixed-int3-suffix-output-bias-router-bias.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "layout": layout, "source_checkpoint": str(source), "trainable_tensors": ["router.bias"], "frozen_tensor_sha256": frozen_tensor_sha256, "seed": seed, "learning_rate": learning_rate, "epochs": epochs}, checkpoint_path)
+    model = model.to(device).eval()
+    fake_misses = 0
+    with torch.no_grad():
+        for start in range(0, len(histories), 4096):
+            batch = histories[start:start + 4096]
+            batch_inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
+            predicted = model.forward_mixed_int3_suffix_output_bias_router_bias(batch_inputs).argmax(dim=-1).tolist()
+            fake_misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(predicted, batch))
+    report = {"layout": layout, "source_checkpoint": str(source), "trainable_tensors": ["router.bias"], "frozen_tensor_sha256": frozen_tensor_sha256, "seed": seed, "learning_rate": learning_rate, "epochs": epochs, "acceptance": {"legal_histories": len(histories), "fake_qat_policy_misses": fake_misses, "materialized_policy_misses": evaluate(materialize_mixed_int3_suffix_output_bias_router_bias(model), tokenizer, device, histories)["policy_misses"]}}
+    (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     return report
 
 
