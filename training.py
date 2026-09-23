@@ -154,9 +154,11 @@ def run_mixed_int4_input_attention_out_qat(
     inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
     labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
     model = load_reference_model(source, tokenizer.vocab_size, device)
-    for parameter in list(model.experts.parameters()) + list(model.output.parameters()):
+    for parameter in model.parameters():
         parameter.requires_grad_(False)
-    optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=0.0008, weight_decay=0.0001)
+    model.attention.out_proj.weight.requires_grad_(True)
+    model.attention.out_proj.bias.requires_grad_(True)
+    optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=0.0001, weight_decay=0.0001)
     groups = frozenset({"q", "v", "out"})
     for epoch in range(1, epochs + 1):
         model.train()
