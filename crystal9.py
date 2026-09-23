@@ -190,6 +190,7 @@ class TinyMoEPolicy(nn.Module):
         attention_bias_groups: frozenset[str] | None = None,
         quantize_router_weight: bool = False,
         quantize_router_bias: bool = False,
+        quantize_expert_biases: bool = False,
     ) -> torch.Tensor:
         """INT4-row input tables plus explicitly selected attention projection groups."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -205,9 +206,9 @@ class TinyMoEPolicy(nn.Module):
         expert_outputs = []
         for expert in self.experts:
             first, _, second = expert
-            value = F.linear(state, quantize_rows_ste(first.weight, 4), first.bias)
+            value = F.linear(state, quantize_rows_ste(first.weight, 4), quantize_ste(first.bias, 4) if quantize_expert_biases else first.bias)
             value = F.silu(value)
-            expert_outputs.append(F.linear(value, quantize_rows_ste(second.weight, 4), second.bias))
+            expert_outputs.append(F.linear(value, quantize_rows_ste(second.weight, 4), quantize_ste(second.bias, 4) if quantize_expert_biases else second.bias))
         all_experts = torch.stack(expert_outputs, dim=1)
         routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
@@ -373,6 +374,16 @@ def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_i
     materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias(source)
     with torch.no_grad():
         materialized.router.bias.copy_(quantize_tensor(materialized.router.bias, 4))
+    return materialized
+
+
+def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted router-bias layout plus every routed-expert bias."""
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias(source)
+    with torch.no_grad():
+        for expert in materialized.experts:
+            expert[0].bias.copy_(quantize_tensor(expert[0].bias, 4))
+            expert[2].bias.copy_(quantize_tensor(expert[2].bias, 4))
     return materialized
 
 
