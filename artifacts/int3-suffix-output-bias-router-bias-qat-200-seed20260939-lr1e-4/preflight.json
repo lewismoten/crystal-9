@@ -1,0 +1,29 @@
+{
+  "layout": "mixed-int3-suffix-output-bias-router-bias",
+  "source_checkpoint": "artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt",
+  "trainable_scope": [
+    "router.bias"
+  ],
+  "frozen_predecessor_tensors": "all except router.bias",
+  "retry_of": "artifacts/int3-suffix-output-bias-router-bias-qat-200-seed20260938-lr1e-4/report.json",
+  "changed_variable": {
+    "seed": 20260939
+  },
+  "learning_rate": 0.0001,
+  "epochs": 200,
+  "direct_baseline": {
+    "fake_qat": {
+      "legal_histories": 294778,
+      "policy_misses": 6
+    },
+    "materialized": {
+      "legal_histories": 294778,
+      "policy_misses": 6
+    }
+  },
+  "acceptance_gate": {
+    "fake_qat_policy_misses": 0,
+    "materialized_policy_misses": 0,
+    "legal_histories": 294778
+  }
+}
