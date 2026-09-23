@@ -12,6 +12,8 @@ from torch.nn import functional as F
 from crystal9 import TinyMoEPolicy, pack_signed_int4, unpack_signed_int4
 
 FORMAT = "crystal-9-packed-int4-v1"
+FP16_SCALES_FORMAT = "crystal-9-packed-int4-fp16-scales-v1"
+_SCALE_STORAGE_FORMATS = {"float32": FORMAT, "float16": FP16_SCALES_FORMAT}
 LEVELS = 7
 WINS = ((0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6))
 
@@ -58,12 +60,12 @@ def _integrity_digest(manifest: dict) -> str:
             "count": record["count"],
         }
         digest.update(json.dumps(metadata, sort_keys=True, separators=(",", ":")).encode())
-        digest.update(record["scales"].detach().cpu().float().contiguous().numpy().tobytes())
+        digest.update(record["scales"].detach().cpu().contiguous().numpy().tobytes())
         digest.update(record["packed"].detach().cpu().contiguous().numpy().tobytes())
     return digest.hexdigest()
 
 
-def _encode(values: torch.Tensor, scheme: str, group_size: int | None = None) -> dict:
+def _encode(values: torch.Tensor, scheme: str, group_size: int | None = None, scale_storage: str = "float32") -> dict:
     values = values.detach().cpu().float().contiguous()
     if scheme == "row":
         groups = values.reshape(values.shape[0], -1)
@@ -78,12 +80,14 @@ def _encode(values: torch.Tensor, scheme: str, group_size: int | None = None) ->
     scales = groups.abs().amax(dim=1)
     safe_scales = torch.where(scales == 0, torch.ones_like(scales), scales)
     codes = torch.round(groups / safe_scales.unsqueeze(1) * LEVELS).clamp(-LEVELS, LEVELS).to(torch.int8)
+    if scale_storage not in _SCALE_STORAGE_FORMATS:
+        raise ValueError(f"unsupported scale storage: {scale_storage}")
     return {
         "shape": tuple(values.shape),
         "scheme": scheme,
         "group_size": group_size,
         "count": values.numel(),
-        "scales": scales,
+        "scales": scales.to(torch.float16 if scale_storage == "float16" else torch.float32),
         "packed": pack_signed_int4(codes.reshape(-1)),
     }
 
@@ -109,16 +113,24 @@ def _scheme_for(name: str, value: torch.Tensor, norm_weight_group_size: int) -> 
     raise ValueError(f"unsupported parameter rank for {name}: {value.ndim}")
 
 
-def export_packed_int4(source: TinyMoEPolicy, path: str | Path, norm_weight_group_size: int = 2) -> dict:
-    """Export every Crystal-9 parameter as packed signed INT4 plus explicit scales."""
+def export_packed_int4(
+    source: TinyMoEPolicy,
+    path: str | Path,
+    norm_weight_group_size: int = 2,
+    scale_storage: str = "float32",
+) -> dict:
+    """Export every parameter as packed INT4 and either FP32 or FP16 explicit scales."""
     if norm_weight_group_size < 1 or source.norm.weight.numel() % norm_weight_group_size:
         raise ValueError("invalid LayerNorm weight group size")
+    if scale_storage not in _SCALE_STORAGE_FORMATS:
+        raise ValueError(f"unsupported scale storage: {scale_storage}")
     tensors = {}
     for name, value in source.state_dict().items():
         scheme, group_size = _scheme_for(name, value, norm_weight_group_size)
-        tensors[name] = _encode(value, scheme, group_size)
+        tensors[name] = _encode(value, scheme, group_size, scale_storage)
     manifest = {
-        "format": FORMAT,
+        "format": _SCALE_STORAGE_FORMATS[scale_storage],
+        "scale_storage": scale_storage,
         "architecture": {"vocab_size": source.embedding.num_embeddings, "hidden_size": source.embedding.embedding_dim, "experts": len(source.experts), "heads": source.attention.num_heads, "norm_eps": source.norm.eps},
         "norm_weight_group_size": norm_weight_group_size,
         "parameter_values": sum(value.numel() for value in source.parameters()),
@@ -135,7 +147,7 @@ class PackedInt4Policy:
     """Independent inference runtime consuming only a packed Crystal-9 artifact."""
 
     def __init__(self, manifest: dict) -> None:
-        if manifest.get("format") != FORMAT:
+        if manifest.get("format") not in _SCALE_STORAGE_FORMATS.values():
             raise ValueError("not a Crystal-9 packed INT4 artifact")
         if manifest.get("integrity_sha256") != _integrity_digest(manifest):
             raise ValueError("packed artifact integrity validation failed")
