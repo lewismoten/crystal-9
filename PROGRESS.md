@@ -30,6 +30,15 @@ The accepted full-parameter run is a 300-epoch continuation from the one-miss gr
 - The checkpoint's FP32 master has `181 / 294,778` misses; it is QAT state only and does not supersede the immutable F32 reference.
 - A packed INT3 artifact/runtime has not yet been exported or accepted.
 
+## Rejected INT3 input-table trial
+
+`mixed-int3-suffix-input`
+
+- Scope: accepted INT3 suffix plus rowwise INT3 token and positional embedding tables.
+- Direct quantization baseline from the accepted suffix: `13,267 / 294,778` misses.
+- 500-epoch QAT with only the input tables trainable, seed `20260937`, learning rate `0.0001`: `11,987 / 294,778` misses in both fake-QAT and materialized evaluation.
+- The FP32 masters regressed to `19,978 / 294,778` misses. This path is rejected and must not be exported or presented as an accepted INT3 model.
+
 ## Rejected router-weight trials
 
 | Trial | Exact-policy misses |
