@@ -196,34 +196,34 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     expert_top, expert_bottom = expert_y - 42, 1270
     _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _FLOW)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
-    first_top, first_bottom = expert_y + 16, expert_y + 265
-    second_top, second_bottom = expert_y + 300, expert_y + 530
-    _rectangle(rgb, width, expert_left + 12, first_top, expert_right - expert_left - 24, first_bottom - first_top, _MUTED, 1)
-    _rectangle(rgb, width, expert_left + 12, second_top, expert_right - expert_left - 24, second_bottom - second_top, _MUTED, 1)
-    _text(rgb, width, expert_left + 28, first_top + 8, "First layer", _LABEL)
-    _text(rgb, width, expert_left + 28, second_top + 8, "Second layer", _LABEL)
     _arrow(rgb, width, router_center, 205, router_center, 395)
     _line(rgb, width, router_center, 485, router_center, expert_top - 8)
-    _ellipse(rgb, width, router_center, 440, 112, 38)
-    _centered_text(rgb, width, router_center, 429, "Selected: 2 experts", _LABEL)
+    _ellipse(rgb, width, router_center, 440, 94, 46)
+    _centered_text(rgb, width, router_center, 420, "Selected:", _LABEL)
+    _centered_text(rgb, width, router_center, 442, "2 experts", _LABEL)
     for expert in range(9):
         x = _MARGIN + expert * (expert_width + expert_gap)
+        box_top, box_bottom = expert_y + 8, expert_y + 520
+        _rectangle(rgb, width, x - 8, box_top, 186, box_bottom - box_top, _MUTED, 1)
+        _centered_text(rgb, width, x + 82, box_top + 8, f"Expert {expert + 1}", _LABEL)
         _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, expert_y + 48)
         _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 298)
-    _arrow(rgb, width, (expert_left + expert_right) // 2, first_bottom + 8, (expert_left + expert_right) // 2, second_top - 8)
-    # The output panel shares the router's top-row alignment; the final path rises from the complete experts box.
-    _line(rgb, width, expert_right, (expert_top + expert_bottom) // 2, expert_right, 70)
-    _arrow(rgb, width, expert_right, 70, 1155, 70)
+        _arrow(rgb, width, x + 92, expert_y + 214, x + 92, expert_y + 286)
+    # The output panel shares the router's top-row alignment; this return arrow is parallel to router-to-experts.
+    output_center = 1242
+    _arrow(rgb, width, output_center, expert_top - 8, output_center, 135)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v6", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v7", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v6",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v7",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
-        "expert_layout": "one Experts box with First layer and Second layer boxed within it",
+        "expert_layout": "nine Expert boxes, each containing its first and second layer",
         "calculation_flow": ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"],
         "vocabulary": _VOCABULARY, "font": "DejaVu Sans", "router_selection_label": "Selected: 2 experts",
+        "router_selection_lines": ["Selected:", "2 experts"],
+        "expert_return_path": "vertical upward arrow, parallel to router-to-experts, ending below Final output",
         "border_legend": {"teal": "weight matrix", "orange": "bias vector"}, "tensors": inventory, "width": width, "height": height,
     }
     rows = b"".join(b"\0" + rgb[row * width * 3 : (row + 1) * width * 3] for row in range(height))
