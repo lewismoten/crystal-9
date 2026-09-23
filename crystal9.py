@@ -11,6 +11,28 @@ from torch import nn
 from torch.nn import functional as F
 
 
+def pack_signed_int4(values: torch.Tensor) -> torch.Tensor:
+    """Pack signed [-8, 7] values low-nibble first; pad an odd final value."""
+    if values.dtype != torch.int8 or values.ndim != 1:
+        raise ValueError("INT4 packing requires a rank-1 torch.int8 tensor")
+    if torch.any(values < -8) or torch.any(values > 7):
+        raise ValueError("INT4 values must be in [-8, 7]")
+    unsigned = (values.to(torch.int16) & 0x0F).to(torch.uint8)
+    if unsigned.numel() % 2:
+        unsigned = torch.cat((unsigned, torch.zeros(1, dtype=torch.uint8, device=values.device)))
+    return unsigned[0::2] | (unsigned[1::2] << 4)
+
+
+def unpack_signed_int4(packed: torch.Tensor, count: int) -> torch.Tensor:
+    """Unpack low-nibble-first signed INT4 values, discarding final padding."""
+    if packed.dtype != torch.uint8 or packed.ndim != 1 or count < 0 or count > packed.numel() * 2:
+        raise ValueError("invalid packed INT4 buffer or count")
+    unsigned = torch.empty(packed.numel() * 2, dtype=torch.int16, device=packed.device)
+    unsigned[0::2] = packed.to(torch.int16) & 0x0F
+    unsigned[1::2] = packed.to(torch.int16) >> 4
+    return torch.where(unsigned[:count] >= 8, unsigned[:count] - 16, unsigned[:count]).to(torch.int8)
+
+
 def quantize_tensor(values: torch.Tensor, bits: int) -> torch.Tensor:
     """Symmetric fake quantization for training/evaluation experiments."""
     if bits >= 32:
