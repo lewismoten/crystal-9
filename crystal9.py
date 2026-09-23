@@ -191,6 +191,7 @@ class TinyMoEPolicy(nn.Module):
         quantize_router_weight: bool = False,
         quantize_router_bias: bool = False,
         quantize_expert_biases: bool = False,
+        quantize_output_bias: bool = False,
     ) -> torch.Tensor:
         """INT4-row input tables plus explicitly selected attention projection groups."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -212,7 +213,7 @@ class TinyMoEPolicy(nn.Module):
         all_experts = torch.stack(expert_outputs, dim=1)
         routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
-        return F.linear(state, quantize_rows_ste(self.output.weight, 4), self.output.bias)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 4), quantize_ste(self.output.bias, 4) if quantize_output_bias else self.output.bias)
 
     def forward_mixed_int4_input_attention_groups_with_biases(
         self,
@@ -384,6 +385,14 @@ def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_i
         for expert in materialized.experts:
             expert[0].bias.copy_(quantize_tensor(expert[0].bias, 4))
             expert[2].bias.copy_(quantize_tensor(expert[2].bias, 4))
+    return materialized
+
+
+def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases_output_bias(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted expert-bias layout plus output bias."""
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases(source)
+    with torch.no_grad():
+        materialized.output.bias.copy_(quantize_tensor(materialized.output.bias, 4))
     return materialized
 
 
