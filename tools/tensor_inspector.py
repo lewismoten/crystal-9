@@ -89,6 +89,31 @@ def _render_tensor(rgb: bytearray, width: int, tensor: torch.Tensor, x: int, y: 
     return columns * _CELL, rows * _CELL
 
 
+def _arrow(rgb: bytearray, width: int, x1: int, y1: int, x2: int, y2: int) -> None:
+    """Draw a thin, directional connector without covering tensor cells."""
+    color = (250, 204, 21)
+    if x1 == x2:
+        step = 1 if y2 >= y1 else -1
+        for y in range(y1, y2, step):
+            _pixel(rgb, width, x1, y, color)
+        tip = y2 - step * 2
+        for dx in (-3, -2, -1, 0, 1, 2, 3):
+            _pixel(rgb, width, x2 + dx, tip, color)
+        for dx in (-2, -1, 0, 1, 2):
+            _pixel(rgb, width, x2 + dx, tip - step, color)
+        _pixel(rgb, width, x2, y2, color)
+        return
+    step = 1 if x2 >= x1 else -1
+    for x in range(x1, x2, step):
+        _pixel(rgb, width, x, y1, color)
+    tip = x2 - step * 2
+    for dy in (-3, -2, -1, 0, 1, 2, 3):
+        _pixel(rgb, width, tip, y2 + dy, color)
+    for dy in (-2, -1, 0, 1, 2):
+        _pixel(rgb, width, tip - step, y2 + dy, color)
+    _pixel(rgb, width, x2, y2, color)
+
+
 def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], weight: str, bias: str, label: str, x: int, y: int) -> tuple[int, int]:
     _text(rgb, width, x, y, label, (226, 232, 240))
     grid_y = y + _HEADER_HEIGHT
@@ -111,7 +136,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     state = _checkpoint_state(source)
     # Three complete expert columns are the widest section; avoid a fourth empty column.
     width = 800
-    height = 2260
+    height = 2510
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -134,31 +159,45 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "OUTPUT PROJECTION", 230, y)
     y += attention_height + _GAP
 
-    _text(rgb, width, _MARGIN, y, "NORM_ROUTER_OUTPUT", (148, 163, 184))
+    _text(rgb, width, _MARGIN, y, "NORM_AND_ROUTER", (148, 163, 184))
     y += _HEADER_HEIGHT
     _render_pair(rgb, width, state, "norm.weight", "norm.bias", "NORM", _MARGIN, y)
     _render_pair(rgb, width, state, "router.weight", "router.bias", "ROUTER", 90, y)
-    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT", 300, y)
     y += 115
 
     _text(rgb, width, _MARGIN, y, "EXPERTS_0_TO_8", (148, 163, 184))
     y += _HEADER_HEIGHT
     expert_width = 235
-    expert_height = 420
+    expert_height = 455
     for expert in range(9):
         x = _MARGIN + (expert % 3) * (expert_width + _GAP)
         top = y + (expert // 3) * (expert_height + _GAP)
         _text(rgb, width, x, top, f"EXPERT_{expert}", (148, 163, 184))
         _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "FIRST LAYER", x, top + _HEADER_HEIGHT)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "SECOND LAYER", x, top + 220)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "SECOND LAYER", x, top + 250)
+        _arrow(rgb, width, x + 190, top + 232, x + 190, top + 247)
+
+    output_y = y + 3 * expert_height + 2 * _GAP + 22
+    _text(rgb, width, _MARGIN, output_y, "COMBINED_OUTPUT", (148, 163, 184))
+    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT", _MARGIN, output_y + _HEADER_HEIGHT)
+
+    # These arrows describe the static calculation graph, not a live routing trace.
+    guide_x = width - 18
+    _arrow(rgb, width, guide_x, 95, guide_x, 170)
+    _arrow(rgb, width, guide_x, 670, guide_x, 770)
+    _arrow(rgb, width, guide_x, 875, guide_x, y - 10)
+    _arrow(rgb, width, guide_x, y + 3 * expert_height + 2 * _GAP, guide_x, output_y - 10)
+    _arrow(rgb, width, 198, 330, 220, 330)
+    _arrow(rgb, width, 32, 835, 78, 835)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v2", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v3", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-grouped-v2",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v3",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router_output", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "3x3 complete expert blocks, layer 1 above layer 2",
+        "calculation_flow": ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"],
         "tensors": inventory, "width": width, "height": height,
     }
     rows = b"".join(b"\0" + rgb[row * width * 3 : (row + 1) * width * 3] for row in range(height))
