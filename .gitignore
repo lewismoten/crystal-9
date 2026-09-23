@@ -5,3 +5,8 @@ artifacts/
 checkpoints/
 *.gguf
 *.safetensors
+artifacts-*.pt
+*-progress.json
+*-report.json
+precision-report.json
+training-progress.json
