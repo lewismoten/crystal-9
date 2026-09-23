@@ -1,0 +1,18 @@
+[project]
+name = "crystal-9"
+version = "0.1.0"
+description = "Tiny custom-vocabulary MoE tic-tac-toe policy-model experiment"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "numpy>=2.4.6",
+  "torch>=2.7",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
