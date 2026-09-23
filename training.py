@@ -100,6 +100,7 @@ def evaluate(
     quantize_expert_biases: bool = False,
     quantize_output_bias: bool = False,
     quantize_norm: bool = False,
+    norm_int4_groups: frozenset[str] | None = None,
 ) -> dict[str, int]:
     model.eval()
     histories = histories if histories is not None else [history for history in legal_histories() if optimal_move(history) != "!"]
@@ -109,9 +110,9 @@ def evaluate(
             batch = histories[start : start + 4096]
             inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
             if attention_int4_groups is not None:
-                if quantize_router_weight or quantize_router_bias or quantize_expert_biases or quantize_output_bias or quantize_norm:
+                if quantize_router_weight or quantize_router_bias or quantize_expert_biases or quantize_output_bias or quantize_norm or norm_int4_groups is not None:
                     logits = model.forward_mixed_int4_input_attention_groups(
-                        inputs, attention_int4_groups, quantize_attention_biases, attention_bias_groups, quantize_router_weight, quantize_router_bias, quantize_expert_biases, quantize_output_bias, quantize_norm
+                        inputs, attention_int4_groups, quantize_attention_biases, attention_bias_groups, quantize_router_weight, quantize_router_bias, quantize_expert_biases, quantize_output_bias, quantize_norm, norm_int4_groups
                     )
                 else:
                     logits = model.forward_mixed_int4_input_attention_groups(
