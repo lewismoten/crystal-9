@@ -14,7 +14,7 @@ def test_int4_attention_stage_matches_its_materialized_runtime():
 
     assert torch.allclose(
         source.forward_mixed_int4_input_attention(token_ids),
-        materialized.forward_mixed_int4_input_attention(token_ids),
+        materialized(token_ids),
         atol=1e-6,
         rtol=0,
     )

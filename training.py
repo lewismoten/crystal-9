@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, quantize_tensor
+from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, quantize_tensor
 
 SQUARES = "abcdefghi"
 MOVE_ORDER = "ebdfhcgia"
@@ -92,6 +92,7 @@ def evaluate(
     mixed_int4: bool = False,
     mixed_int4_input: bool = False,
     mixed_int4_input_attention: bool = False,
+    attention_int4_groups: frozenset[str] | None = None,
 ) -> dict[str, int]:
     model.eval()
     histories = histories if histories is not None else [history for history in legal_histories() if optimal_move(history) != "!"]
@@ -100,7 +101,7 @@ def evaluate(
         for start in range(0, len(histories), 4096):
             batch = histories[start : start + 4096]
             inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
-            logits = model.forward_mixed_int4_input_attention(inputs) if mixed_int4_input_attention else model.forward_mixed_int4_input(inputs) if mixed_int4_input else model.forward_mixed_int4(inputs) if mixed_int4 else model.forward_quantized(inputs, qat_bits) if qat_bits else model(inputs)
+            logits = model.forward_mixed_int4_input_attention_groups(inputs, attention_int4_groups) if attention_int4_groups is not None else model.forward_mixed_int4_input_attention(inputs) if mixed_int4_input_attention else model.forward_mixed_int4_input(inputs) if mixed_int4_input else model.forward_mixed_int4(inputs) if mixed_int4 else model.forward_quantized(inputs, qat_bits) if qat_bits else model(inputs)
             predicted = logits.argmax(dim=-1).tolist()
             misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(predicted, batch))
     return {"legal_histories": len(histories), "policy_misses": misses}
@@ -132,6 +133,57 @@ def qat_step(
 def batch_ranges(total: int, batch_size: int):
     for start in range(0, total, batch_size):
         yield start, min(total, start + batch_size)
+
+
+def run_mixed_int4_input_attention_q_qat(
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+) -> dict:
+    """Add only the Q attention projection to the verified input-INT4 layout."""
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts/mixed-int4-row-input-continue-800/artifacts-qat-mixed-int4-row-input.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    for parameter in list(model.experts.parameters()) + list(model.output.parameters()):
+        parameter.requires_grad_(False)
+    optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=0.0008, weight_decay=0.0001)
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            loss = nn.functional.cross_entropy(model.forward_mixed_int4_input_attention_q(inputs[index]), labels[index])
+            loss.backward()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
+            progress = {"epoch": epoch, "layout": "mixed-int4-row-input-attention-q", "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "source_checkpoint": source.name, "frozen_suffix": ["experts", "output"]}
+            (output / "mixed-int4-row-input-attention-q-progress.json").write_text(json.dumps(progress, indent=2) + "\n")
+    checkpoint_path = output / "artifacts-qat-mixed-int4-row-input-attention-q.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "layout": "mixed-int4-row-input-attention-q", "source_checkpoint": source.name, "frozen_suffix": ["experts", "output"]}, checkpoint_path)
+    model = model.to(device)
+    materialized = materialize_mixed_int4_input_attention_q(model)
+    report = {
+        "layout": "mixed-int4-row-input-attention-q",
+        "frozen_suffix": ["experts", "output"],
+        "qat_forward": evaluate(model, tokenizer, device, histories, attention_int4_groups=frozenset({"q"})),
+        "materialized_mixed_int4_row_input_attention_q": evaluate(materialized, tokenizer, device, histories),
+        "source_checkpoint": source.name,
+    }
+    (output / "mixed-int4-row-input-attention-q-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 def run_mixed_int4_input_attention_qat(
@@ -178,7 +230,7 @@ def run_mixed_int4_input_attention_qat(
         "layout": "mixed-int4-row-input-attention",
         "frozen_suffix": ["experts", "output"],
         "qat_forward": evaluate(model, tokenizer, device, histories, mixed_int4_input_attention=True),
-        "materialized_mixed_int4_row_input_attention": evaluate(materialized, tokenizer, device, histories, mixed_int4_input_attention=True),
+        "materialized_mixed_int4_row_input_attention": evaluate(materialized, tokenizer, device, histories),
         "source_checkpoint": source.name,
     }
     (output / "mixed-int4-row-input-attention-report.json").write_text(json.dumps(report, indent=2) + "\n")
