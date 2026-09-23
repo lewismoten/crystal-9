@@ -193,6 +193,7 @@ class TinyMoEPolicy(nn.Module):
         quantize_expert_biases: bool = False,
         quantize_output_bias: bool = False,
         quantize_norm: bool = False,
+        norm_int4_groups: frozenset[str] | None = None,
     ) -> torch.Tensor:
         """INT4-row input tables plus explicitly selected attention projection groups."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -201,7 +202,8 @@ class TinyMoEPolicy(nn.Module):
         attended = self._int4_self_attention(hidden, token_ids, int4_groups, quantize_attention_biases, attention_bias_groups)
         last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
         selected = attended[torch.arange(token_ids.shape[0], device=token_ids.device), last]
-        state = F.layer_norm(selected, self.norm.normalized_shape, quantize_ste(self.norm.weight, 4) if quantize_norm else self.norm.weight, quantize_ste(self.norm.bias, 4) if quantize_norm else self.norm.bias, self.norm.eps)
+        norm_int4_groups = norm_int4_groups if norm_int4_groups is not None else (frozenset({"weight", "bias"}) if quantize_norm else frozenset())
+        state = F.layer_norm(selected, self.norm.normalized_shape, quantize_ste(self.norm.weight, 4) if "weight" in norm_int4_groups else self.norm.weight, quantize_ste(self.norm.bias, 4) if "bias" in norm_int4_groups else self.norm.bias, self.norm.eps)
         router_weight = quantize_rows_ste(self.router.weight, 4) if quantize_router_weight else self.router.weight
         router_bias = quantize_ste(self.router.bias, 4) if quantize_router_bias else self.router.bias
         router_weights = torch.softmax(F.linear(state, router_weight, router_bias), dim=-1)
@@ -395,6 +397,14 @@ def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_i
     materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases(source)
     with torch.no_grad():
         materialized.output.bias.copy_(quantize_tensor(materialized.output.bias, 4))
+    return materialized
+
+
+def materialize_mixed_int4_norm_bias(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted output-bias layout plus only LayerNorm bias."""
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases_output_bias(source)
+    with torch.no_grad():
+        materialized.norm.bias.copy_(quantize_tensor(materialized.norm.bias, 4))
     return materialized
 
 
