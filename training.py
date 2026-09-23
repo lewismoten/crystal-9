@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, materialize_mixed_int4_input_attention_q_v_out_k, materialize_mixed_int4_input_attention_q_v_out_k_attention_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight, quantize_tensor
+from crystal9 import GameTokenizer, TinyMoEPolicy, materialize_mixed_int4, materialize_mixed_int4_input, materialize_mixed_int4_input_attention, materialize_mixed_int4_input_attention_q, materialize_mixed_int4_input_attention_v, materialize_mixed_int4_input_attention_q_v_out, materialize_mixed_int4_input_attention_q_v_out_k, materialize_mixed_int4_input_attention_q_v_out_k_attention_biases, materialize_mixed_int4_input_attention_q_v_out_k_output_bias, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight, materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias, quantize_tensor
 
 SQUARES = "abcdefghi"
 MOVE_ORDER = "ebdfhcgia"
@@ -269,6 +269,59 @@ def run_mixed_int4_router_weight_qat(
         "source_checkpoint": source.name,
     }
     (output / "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
+def run_mixed_int4_attention_input_bias_router_weight_qat(
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+    learning_rate: float = 0.0001,
+    seed: int | None = None,
+) -> dict:
+    """Add only INT4 attention input bias to the accepted router-weight layout."""
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts/mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight-seed20260924-200/artifacts-qat-mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
+    model.attention.in_proj_bias.requires_grad_(True)
+    if seed is not None:
+        torch.manual_seed(seed)
+    optimizer = torch.optim.AdamW((model.attention.in_proj_bias,), lr=learning_rate, weight_decay=0.0001)
+    groups = frozenset({"q", "k", "v", "out"})
+    bias_groups = frozenset({"in", "out"})
+    layout = "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight-input-bias"
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            loss = nn.functional.cross_entropy(model.forward_mixed_int4_input_attention_groups(inputs[index], groups, attention_bias_groups=bias_groups, quantize_router_weight=True), labels[index])
+            loss.backward()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
+            progress = {"epoch": epoch, "layout": layout, "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "learning_rate": learning_rate, "seed": seed, "source_checkpoint": source.name, "trainable_tensor": "attention.in_proj_bias"}
+            (output / f"{layout}-progress.json").write_text(json.dumps(progress, indent=2) + "\n")
+    checkpoint_path = output / f"artifacts-qat-{layout}.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "layout": layout, "source_checkpoint": source.name, "trainable_tensor": "attention.in_proj_bias", "learning_rate": learning_rate, "seed": seed}, checkpoint_path)
+    model = model.to(device)
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias(model)
+    report = {"layout": layout, "trainable_tensor": "attention.in_proj_bias", "qat_forward": evaluate(model, tokenizer, device, histories, attention_int4_groups=groups, attention_bias_groups=bias_groups, quantize_router_weight=True), "materialized_mixed_int4_row_input_attention_q_v_out_k_output_bias_router_weight_input_bias": evaluate(materialized, tokenizer, device, histories), "source_checkpoint": source.name}
+    (output / f"{layout}-report.json").write_text(json.dumps(report, indent=2) + "\n")
     return report
 
 

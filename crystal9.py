@@ -328,6 +328,14 @@ def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight(s
     return materialized
 
 
+def materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted router layout plus the attention input bias."""
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight(source)
+    with torch.no_grad():
+        materialized.attention.in_proj_bias.copy_(quantize_tensor(materialized.attention.in_proj_bias, 4))
+    return materialized
+
+
 def materialize_mixed_int4_input_attention_q_v_out_k_attention_biases(source: TinyMoEPolicy) -> TinyMoEPolicy:
     """Materialize every attention weight and both attention bias tensors as INT4."""
     materialized = materialize_mixed_int4_input_attention_q_v_out_k(source)
