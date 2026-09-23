@@ -126,6 +126,46 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_rows_ste(self.output.weight, 4), self.output.bias)
 
+    def _int4_self_attention(self, hidden: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
+        """Custom runtime path for INT4-row Q/K/V and attention output weights."""
+        batch, steps, width = hidden.shape
+        heads = self.attention.num_heads
+        head_width = width // heads
+        qkv = F.linear(hidden, quantize_rows_ste(self.attention.in_proj_weight, 4), self.attention.in_proj_bias)
+        query, key, value = qkv.chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2)
+        key = key.view(batch, steps, heads, head_width).transpose(1, 2)
+        value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf"))
+        scores = scores.masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        weights = torch.softmax(scores, dim=-1)
+        attended = weights @ value
+        attended = attended.transpose(1, 2).contiguous().view(batch, steps, width)
+        return F.linear(attended, quantize_rows_ste(self.attention.out_proj.weight, 4), self.attention.out_proj.bias)
+
+    def forward_mixed_int4_input_attention(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """INT4-row input tables and attention projections with a fixed INT4 suffix."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_rows_ste(self.embedding.weight, 4), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_rows_ste(self.position.weight, 4))
+        attended = self._int4_self_attention(hidden, token_ids)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(self.router(state), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 4), first.bias)
+            value = F.silu(value)
+            expert_outputs.append(F.linear(value, quantize_rows_ste(second.weight, 4), second.bias))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 4), self.output.bias)
+
     def forward_quantized(self, token_ids: torch.Tensor, bits: int) -> torch.Tensor:
         """QAT forward path for the embedding, routed MLP, router, and head.
 
@@ -181,6 +221,15 @@ def materialize_mixed_int4_input(source: TinyMoEPolicy) -> TinyMoEPolicy:
     with torch.no_grad():
         materialized.embedding.weight.copy_(quantize_rows(materialized.embedding.weight, 4))
         materialized.position.weight.copy_(quantize_rows(materialized.position.weight, 4))
+    return materialized
+
+
+def materialize_mixed_int4_input_attention(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the input and attention INT4-row stage."""
+    materialized = materialize_mixed_int4_input(source)
+    with torch.no_grad():
+        materialized.attention.in_proj_weight.copy_(quantize_rows(materialized.attention.in_proj_weight, 4))
+        materialized.attention.out_proj.weight.copy_(quantize_rows(materialized.attention.out_proj.weight, 4))
     return materialized
 
 
