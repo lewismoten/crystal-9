@@ -219,6 +219,7 @@ def run_mixed_int4_router_weight_qat(
     output_dir: str | Path | None = None,
     histories: list[str] | None = None,
     device: torch.device | None = None,
+    learning_rate: float = 0.0001,
 ) -> dict:
     """Add only INT4-row router weights to the accepted output-bias layout."""
     root = Path(__file__).parent
@@ -234,7 +235,7 @@ def run_mixed_int4_router_weight_qat(
     for parameter in model.parameters():
         parameter.requires_grad_(False)
     model.router.weight.requires_grad_(True)
-    optimizer = torch.optim.AdamW((model.router.weight,), lr=0.0001, weight_decay=0.0001)
+    optimizer = torch.optim.AdamW((model.router.weight,), lr=learning_rate, weight_decay=0.0001)
     groups = frozenset({"q", "k", "v", "out"})
     bias_groups = frozenset({"out"})
     for epoch in range(1, epochs + 1):
@@ -251,7 +252,7 @@ def run_mixed_int4_router_weight_qat(
             optimizer.step()
             weighted_loss += float(loss.item()) * len(index)
         if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
-            progress = {"epoch": epoch, "layout": "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight", "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "source_checkpoint": source.name, "trainable_tensor": "router.weight"}
+            progress = {"epoch": epoch, "layout": "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight", "loss": weighted_loss / len(histories), "device": str(device), "examples": len(histories), "batch_size": batch_size, "learning_rate": learning_rate, "source_checkpoint": source.name, "trainable_tensor": "router.weight"}
             (output / "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight-progress.json").write_text(json.dumps(progress, indent=2) + "\n")
     checkpoint_path = output / "artifacts-qat-mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight.pt"
     torch.save({"state_dict": model.cpu().state_dict(), "layout": "mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight", "source_checkpoint": source.name, "trainable_tensor": "router.weight"}, checkpoint_path)
