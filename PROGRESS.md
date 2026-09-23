@@ -17,7 +17,18 @@
 - LayerNorm weight: INT4 in 16 contiguous groups of 2, each with an explicit group scale
 - Exact policy gate: **0 / 294,778** misses in both fake-QAT and materialized runtime
 
-The accepted full-parameter run is a 300-epoch continuation from the one-miss group-of-2 checkpoint, using learning rate `0.00005` and seed `20260934`. The independent packed runtime is accepted as `crystal-9-packed-int4-v1`: it consumes signed INT4 nibbles and explicit scale tensors, and passed the same `0 / 294,778` legal-policy gate. Its artifact is `artifacts/crystal-9-int4-group2-packed-v1.pt` (`46,419` bytes; SHA-256 `f7daae2c717641528ed3ca1d311fc52b1402bb8ea75d9f4588b3c32a4484135a`). Invalid-input publication gates remain unfinished.
+The accepted full-parameter run is a 300-epoch continuation from the one-miss group-of-2 checkpoint, using learning rate `0.00005` and seed `20260934`. The independent packed runtime is accepted as `crystal-9-packed-int4-v1`: it consumes signed INT4 nibbles and explicit scale tensors, and passed the same `0 / 294,778` legal-policy gate. Its artifact is `artifacts/crystal-9-int4-group2-packed-v1.pt` (`46,419` bytes; SHA-256 `f7daae2c717641528ed3ca1d311fc52b1402bb8ea75d9f4588b3c32a4484135a`). Integrity verification and invalid-history gates are accepted: malformed, repeated-square, oversized, and post-terminal histories return `!`.
+
+## Accepted INT3 scope 1
+
+`mixed-int3-suffix`
+
+- INT3 scope: both matrix weights in each of the nine routed experts, plus `output.weight`, all rowwise INT3.
+- Upstream tensors remain F32; this is an accepted staged scope, **not** a full-parameter INT3 model.
+- A 300-epoch continuation from the one-miss 200-epoch checkpoint used seed `20260936` and learning rate `0.00005`.
+- Exact policy gate: **0 / 294,778** misses in fake-QAT and separately materialized evaluation.
+- The checkpoint's FP32 master has `181 / 294,778` misses; it is QAT state only and does not supersede the immutable F32 reference.
+- A packed INT3 artifact/runtime has not yet been exported or accepted.
 
 ## Rejected router-weight trials
 
