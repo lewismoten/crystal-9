@@ -9,10 +9,11 @@
 - Attention output bias: INT4
 - Attention input bias: INT4
 - Router weight: INT4 per row
+- Router bias: INT4
 - All routed-expert matrix weights and output weight: INT4 per row
 - Exact policy gate: **0 / 294,778** misses in both fake-QAT and materialized runtime
 
-The accepted input-bias run uses learning rate `0.0001` and seed `20260925`, initialized from the verified router-weight stage. It is not a full-model INT4 claim: router bias, expert biases, output bias, LayerNorm parameters, packed storage, independent packed runtime, and invalid-input publication gates remain unfinished.
+The accepted router-bias run uses learning rate `0.0001` and seed `20260926`, initialized from the verified input-bias stage. It is not a full-model INT4 claim: expert biases, output bias, LayerNorm parameters, packed storage, independent packed runtime, and invalid-input publication gates remain unfinished.
 
 ## Rejected router-weight trials
 
