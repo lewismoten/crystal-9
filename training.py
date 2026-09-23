@@ -96,7 +96,12 @@ def evaluate(model: TinyMoEPolicy, tokenizer: GameTokenizer, device: torch.devic
     return {"legal_histories": len(histories), "policy_misses": misses}
 
 
-def run(epochs: int = 400) -> dict:
+def batch_ranges(total: int, batch_size: int):
+    for start in range(0, total, batch_size):
+        yield start, min(total, start + batch_size)
+
+
+def run(epochs: int = 400, batch_size: int = 1024) -> dict:
     root = Path(__file__).parent
     tokenizer = GameTokenizer.from_design_file(root / "design.json")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -109,12 +114,18 @@ def run(epochs: int = 400) -> dict:
     loss_fn = nn.CrossEntropyLoss()
     for epoch in range(1, epochs + 1):
         model.train()
-        optimizer.zero_grad()
-        loss = loss_fn(model(inputs), labels)
-        loss.backward()
-        optimizer.step()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            loss = loss_fn(model(inputs[index]), labels[index])
+            loss.backward()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        loss_value = weighted_loss / len(histories)
         if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
-            report = {"epoch": epoch, "loss": float(loss.item()), "device": str(device), "examples": len(histories)}
+            report = {"epoch": epoch, "loss": loss_value, "device": str(device), "examples": len(histories), "batch_size": batch_size}
             (root / "training-progress.json").write_text(json.dumps(report, indent=2) + "\n")
     torch.save({"state_dict": model.cpu().state_dict(), "design": json.loads((root / "design.json").read_text())}, root / "artifacts-fp32.pt")
     results = {"fp32": evaluate(model.to(device), tokenizer, device)}
