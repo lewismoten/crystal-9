@@ -1,0 +1,14 @@
+{
+  "epoch": 200,
+  "layout": "mixed-int3-suffix-output-bias-router-bias",
+  "loss": 0.00013269269972732248,
+  "device": "cuda:0",
+  "examples": 294778,
+  "batch_size": 1024,
+  "source_checkpoint": "/home/ai/crystal-9/artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt",
+  "trainable_tensors": [
+    "router.bias"
+  ],
+  "seed": 20260940,
+  "learning_rate": 0.0001
+}
