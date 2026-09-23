@@ -12,15 +12,14 @@ import torch
 
 _SIGNATURE = b"\x89PNG\r\n\x1a\n"
 _CELL = 5
-_MARGIN = 14
+_MARGIN = 20
 _HEADER_HEIGHT = 36
-_GAP = 18
 _FONT = {
     "A": ("010", "101", "111", "101", "101"), "B": ("110", "101", "110", "101", "110"), "C": ("011", "100", "100", "100", "011"),
     "D": ("110", "101", "101", "101", "110"), "E": ("111", "100", "110", "100", "111"), "F": ("111", "100", "110", "100", "100"), "G": ("011", "100", "101", "101", "011"),
     "H": ("101", "101", "111", "101", "101"), "I": ("111", "010", "010", "010", "111"), "J": ("001", "001", "001", "101", "010"),
     "K": ("101", "101", "110", "101", "101"), "L": ("100", "100", "100", "100", "111"), "M": ("101", "111", "111", "101", "101"), "N": ("101", "111", "111", "111", "101"),
-    "O": ("010", "101", "101", "101", "010"), "P": ("110", "101", "110", "100", "100"), "R": ("110", "101", "110", "101", "101"),
+    "O": ("010", "101", "101", "101", "010"), "P": ("110", "101", "110", "101", "110"), "R": ("110", "101", "110", "101", "101"),
     "S": ("011", "100", "010", "001", "110"), "T": ("111", "010", "010", "010", "010"), "U": ("101", "101", "101", "101", "111"),
     "V": ("101", "101", "101", "101", "010"), "W": ("101", "101", "111", "111", "101", "101"), "X": ("101", "101", "010", "101", "101"),
     "Y": ("101", "101", "010", "010", "010"), "Z": ("111", "001", "010", "100", "111"), "0": ("111", "101", "101", "101", "111"),
@@ -55,9 +54,7 @@ def _text(rgb: bytearray, width: int, x: int, y: int, text: str, color: tuple[in
 def _color(value: float) -> tuple[int, int, int]:
     strength = min(abs(value), 1.0)
     base = int(18 + 222 * strength)
-    if value < 0:
-        return (22, int(35 + 95 * (1 - strength)), base)
-    return (base, int(45 + 175 * strength), 26)
+    return (22, int(35 + 95 * (1 - strength)), base) if value < 0 else (base, int(45 + 175 * strength), 26)
 
 
 def _checkpoint_state(source: Path) -> dict[str, torch.Tensor]:
@@ -69,10 +66,8 @@ def _checkpoint_state(source: Path) -> dict[str, torch.Tensor]:
 
 
 def _shape(tensor: torch.Tensor) -> tuple[int, int]:
-    """Use vertical output rows for both matrices and matching 1-D vectors."""
-    if tensor.ndim == 1:
-        return tensor.numel(), 1
-    return int(tensor.shape[0]), int(math.prod(tensor.shape[1:]))
+    """Matrices and matching bias vectors share a vertical output-row axis."""
+    return (tensor.numel(), 1) if tensor.ndim == 1 else (int(tensor.shape[0]), int(math.prod(tensor.shape[1:])))
 
 
 def _render_tensor(rgb: bytearray, width: int, tensor: torch.Tensor, x: int, y: int) -> tuple[int, int]:
@@ -80,8 +75,7 @@ def _render_tensor(rgb: bytearray, width: int, tensor: torch.Tensor, x: int, y: 
     values = tensor.detach().to(torch.float32).flatten().tolist()
     peak = max((abs(value) for value in values), default=0.0) or 1.0
     for index, value in enumerate(values):
-        cx = x + (index % columns) * _CELL
-        cy = y + (index // columns) * _CELL
+        cx, cy = x + (index % columns) * _CELL, y + (index // columns) * _CELL
         color = _color(value / peak)
         for dy in range(_CELL - 1):
             for dx in range(_CELL - 1):
@@ -89,35 +83,42 @@ def _render_tensor(rgb: bytearray, width: int, tensor: torch.Tensor, x: int, y: 
     return columns * _CELL, rows * _CELL
 
 
-def _arrow(rgb: bytearray, width: int, x1: int, y1: int, x2: int, y2: int) -> None:
-    """Draw a thin, directional connector without covering tensor cells."""
-    color = (250, 204, 21)
+def _line(rgb: bytearray, width: int, x1: int, y1: int, x2: int, y2: int, color: tuple[int, int, int] = (250, 204, 21)) -> None:
     if x1 == x2:
-        step = 1 if y2 >= y1 else -1
-        for y in range(y1, y2, step):
-            _pixel(rgb, width, x1, y, color)
-        tip = y2 - step * 2
-        for dx in (-3, -2, -1, 0, 1, 2, 3):
-            _pixel(rgb, width, x2 + dx, tip, color)
-        for dx in (-2, -1, 0, 1, 2):
-            _pixel(rgb, width, x2 + dx, tip - step, color)
-        _pixel(rgb, width, x2, y2, color)
-        return
-    step = 1 if x2 >= x1 else -1
-    for x in range(x1, x2, step):
-        _pixel(rgb, width, x, y1, color)
-    tip = x2 - step * 2
-    for dy in (-3, -2, -1, 0, 1, 2, 3):
-        _pixel(rgb, width, tip, y2 + dy, color)
-    for dy in (-2, -1, 0, 1, 2):
-        _pixel(rgb, width, tip - step, y2 + dy, color)
-    _pixel(rgb, width, x2, y2, color)
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            for dx in (-1, 0, 1):
+                _pixel(rgb, width, x1 + dx, y, color)
+    elif y1 == y2:
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            for dy in (-1, 0, 1):
+                _pixel(rgb, width, x, y1 + dy, color)
+    else:
+        raise ValueError("connectors must be horizontal or vertical")
+
+
+def _arrow(rgb: bytearray, width: int, x1: int, y1: int, x2: int, y2: int) -> None:
+    """Draw an unambiguous arrow: wings trail behind its destination tip."""
+    color = (250, 204, 21)
+    if y1 == y2:
+        direction = 1 if x2 > x1 else -1
+        _line(rgb, width, x1, y1, x2 - direction * 7, y1, color)
+        for offset in range(0, 8):
+            _pixel(rgb, width, x2 - direction * offset, y2 - offset, color)
+            _pixel(rgb, width, x2 - direction * offset, y2 + offset, color)
+    elif x1 == x2:
+        direction = 1 if y2 > y1 else -1
+        _line(rgb, width, x1, y1, x1, y2 - direction * 7, color)
+        for offset in range(0, 8):
+            _pixel(rgb, width, x2 - offset, y2 - direction * offset, color)
+            _pixel(rgb, width, x2 + offset, y2 - direction * offset, color)
+    else:
+        raise ValueError("arrows must be horizontal or vertical")
 
 
 def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], weight: str, bias: str, label: str, x: int, y: int) -> tuple[int, int]:
     _text(rgb, width, x, y, label, (226, 232, 240))
-    grid_y = y + _HEADER_HEIGHT
     _text(rgb, width, x, y + 12, "WEIGHTS", (148, 163, 184))
+    grid_y = y + _HEADER_HEIGHT
     weight_width, weight_height = _render_tensor(rgb, width, state[weight], x, grid_y)
     bias_x = x + weight_width + _CELL
     _text(rgb, width, bias_x, y + 12, "BIAS", (148, 163, 184))
@@ -132,11 +133,9 @@ def _render_single(rgb: bytearray, width: int, state: dict[str, torch.Tensor], n
 
 
 def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]:
-    """Create a derived architecture map; it is not a byte transport artifact."""
+    """Create a derived, architecture-flow map; it is not a byte transport artifact."""
     state = _checkpoint_state(source)
-    # Three complete expert columns are the widest section; avoid a fourth empty column.
-    width = 800
-    height = 2510
+    width, height = 2450, 1390
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -144,59 +143,53 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         for name, tensor in state.items()
     }
 
-    y = _MARGIN
-    _text(rgb, width, _MARGIN, y, "INPUTS", (148, 163, 184))
-    _text(rgb, width, 350, y, "BIAS COLUMN", (148, 163, 184))
-    _text(rgb, width, 350, y + 12, "MATCHES MATRIX ROWS", (148, 163, 184))
-    y += _HEADER_HEIGHT + 12
-    _render_single(rgb, width, state, "embedding.weight", "TOKEN_EMBED", _MARGIN, y)
-    _render_single(rgb, width, state, "position.weight", "POSITION_EMBED", _MARGIN + 220, y)
-    y += 110
+    top_y, flow_y = 100, 64
+    _text(rgb, width, _MARGIN, 20, "MODEL FLOW LEFT TO RIGHT", (148, 163, 184))
+    _text(rgb, width, 1880, 20, "BIAS COLUMN MATCHES MATRIX ROWS", (148, 163, 184))
 
-    _text(rgb, width, _MARGIN, y, "ATTENTION", (148, 163, 184))
-    y += _HEADER_HEIGHT
-    _, attention_height = _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "INPUT PROJECTION", _MARGIN, y)
-    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "OUTPUT PROJECTION", 230, y)
-    y += attention_height + _GAP
+    _render_single(rgb, width, state, "embedding.weight", "TOKEN EMBED", 20, top_y)
+    _render_single(rgb, width, state, "position.weight", "POSITION EMBED", 210, top_y)
+    _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "INPUT PROJECTION", 400, top_y)
+    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "OUTPUT PROJECTION", 630, top_y)
+    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "NORM", 850, top_y)
+    _render_pair(rgb, width, state, "router.weight", "router.bias", "ROUTER", 950, top_y)
 
-    _text(rgb, width, _MARGIN, y, "NORM_AND_ROUTER", (148, 163, 184))
-    y += _HEADER_HEIGHT
-    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "NORM", _MARGIN, y)
-    _render_pair(rgb, width, state, "router.weight", "router.bias", "ROUTER", 90, y)
-    y += 115
+    # Main left-to-right calculation flow. The first two inputs combine before attention.
+    _arrow(rgb, width, 175, flow_y, 395, flow_y)
+    _arrow(rgb, width, 605, flow_y, 625, flow_y)
+    _arrow(rgb, width, 825, flow_y, 845, flow_y)
+    _arrow(rgb, width, 925, flow_y, 945, flow_y)
 
-    _text(rgb, width, _MARGIN, y, "EXPERTS_0_TO_8", (148, 163, 184))
-    y += _HEADER_HEIGHT
-    expert_width = 235
-    expert_height = 455
+    expert_y, expert_gap, expert_width = 700, 30, 240
+    router_center = 1030
+    bus_y = expert_y - 34
+    _arrow(rgb, width, router_center, 190, router_center, bus_y)
+    _line(rgb, width, 100, bus_y, 2350, bus_y)
     for expert in range(9):
-        x = _MARGIN + (expert % 3) * (expert_width + _GAP)
-        top = y + (expert // 3) * (expert_height + _GAP)
-        _text(rgb, width, x, top, f"EXPERT_{expert}", (148, 163, 184))
-        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "FIRST LAYER", x, top + _HEADER_HEIGHT)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "SECOND LAYER", x, top + 250)
-        _arrow(rgb, width, x + 190, top + 232, x + 190, top + 247)
+        x = _MARGIN + expert * (expert_width + expert_gap)
+        center = x + 92
+        _arrow(rgb, width, center, bus_y, center, expert_y - 8)
+        _text(rgb, width, x, expert_y, f"EXPERT {expert}", (148, 163, 184))
+        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "FIRST LAYER", x, expert_y + 28)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "SECOND LAYER", x, expert_y + 270)
+        _arrow(rgb, width, x + 190, expert_y + 224, x + 190, expert_y + 262)
 
-    output_y = y + 3 * expert_height + 2 * _GAP + 22
-    _text(rgb, width, _MARGIN, output_y, "COMBINED_OUTPUT", (148, 163, 184))
-    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT", _MARGIN, output_y + _HEADER_HEIGHT)
-
-    # These arrows describe the static calculation graph, not a live routing trace.
-    guide_x = width - 18
-    _arrow(rgb, width, guide_x, 95, guide_x, 170)
-    _arrow(rgb, width, guide_x, 670, guide_x, 770)
-    _arrow(rgb, width, guide_x, 875, guide_x, y - 10)
-    _arrow(rgb, width, guide_x, y + 3 * expert_height + 2 * _GAP, guide_x, output_y - 10)
-    _arrow(rgb, width, 198, 330, 220, 330)
-    _arrow(rgb, width, 32, 835, 78, 835)
+    combine_y = 1185
+    _line(rgb, width, 100, combine_y, 2350, combine_y)
+    for expert in range(9):
+        x = _MARGIN + expert * (expert_width + expert_gap)
+        _arrow(rgb, width, x + 92, expert_y + 466, x + 92, combine_y)
+    _arrow(rgb, width, 100, combine_y, 100, 1220)
+    _text(rgb, width, _MARGIN, 1235, "COMBINED OUTPUT", (148, 163, 184))
+    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT", _MARGIN, 1265)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v3", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v4", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v3",
-        "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router_output", "experts", "output"],
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v4",
+        "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
-        "expert_layout": "3x3 complete expert blocks, layer 1 above layer 2",
+        "expert_layout": "one horizontal row of nine complete expert blocks, layer 1 above layer 2",
         "calculation_flow": ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"],
         "tensors": inventory, "width": width, "height": height,
     }
