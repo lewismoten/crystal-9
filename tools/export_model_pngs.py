@@ -65,7 +65,7 @@ def main() -> None:
                 "round_trip_verified": True,
             }
         )
-    (OUTPUT.parent / "manifest.json").write_text(json.dumps({"format": "crystal-9-rgb-byte-png-v3", "models": manifest}, indent=2) + "\n")
+    (OUTPUT.parent / "manifest.json").write_text(json.dumps({"format": "crystal-9-rgb-byte-png-v4", "models": manifest}, indent=2) + "\n")
 
 
 if __name__ == "__main__":
