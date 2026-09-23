@@ -13,3 +13,5 @@ def test_model_byte_payload_round_trips_through_lossless_rgba_png():
     assert metadata["source_bytes"] == len(payload)
     assert metadata["sha256"] == hashlib.sha256(payload).hexdigest()
     assert metadata["width"] * metadata["height"] * 3 >= len(payload)
+    # PNG truecolor (type 2) has RGB channels only; it does not store alpha.
+    assert png[25] == 2

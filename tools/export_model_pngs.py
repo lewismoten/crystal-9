@@ -57,11 +57,11 @@ def main() -> None:
                 "png_bytes": len(png),
                 "width": png_metadata["width"],
                 "height": png_metadata["height"],
-                "transport": "RGB payload bytes; alpha fixed at 255",
+                "transport": "RGB payload bytes; no alpha channel",
                 "round_trip_verified": True,
             }
         )
-    (OUTPUT.parent / "manifest.json").write_text(json.dumps({"format": "crystal-9-rgba-byte-png-v1", "models": manifest}, indent=2) + "\n")
+    (OUTPUT.parent / "manifest.json").write_text(json.dumps({"format": "crystal-9-rgb-byte-png-v1", "models": manifest}, indent=2) + "\n")
 
 
 if __name__ == "__main__":
