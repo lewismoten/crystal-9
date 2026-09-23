@@ -10,3 +10,5 @@ artifacts-*.pt
 *-report.json
 precision-report.json
 training-progress.json
+png-model-gallery/.server.pid
+png-model-gallery/.server.log

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Crystal-9 PNG model gallery</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #d5dde8; background: #0c1118; }
+    body { margin: 0; padding: clamp(16px, 4vw, 48px); }
+    main { max-width: 1100px; margin: auto; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.4rem, 3vw, 2rem); color: #d9f99d; }
+    .lede, .note { color: #aab7c7; line-height: 1.55; max-width: 76ch; }
+    .note { border-left: 3px solid #facc15; background: #171712; padding: 12px 16px; }
+    #models { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 18px; margin-top: 24px; }
+    article { border: 1px solid #2c3949; border-radius: 10px; background: #121a24; overflow: hidden; }
+    .image-wrap { min-height: 250px; display: grid; place-items: center; background: #06090d; padding: 16px; }
+    img { width: min(100%, 360px); max-height: 360px; object-fit: contain; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid #42556b; }
+    .content { padding: 16px; }
+    h2 { font-size: 1rem; margin: 0 0 8px; color: #e2e8f0; }
+    .status { color: #bef264; font-size: .8rem; }
+    dl { margin: 14px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 7px 12px; font-size: .78rem; }
+    dt { color: #8ba0b8; } dd { margin: 0; overflow-wrap: anywhere; }
+    a { color: #7dd3fc; } code { color: #fcd34d; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Crystal-9 as lossless PNG byte payloads</h1>
+    <p class="lede">Each image is the exact bytes of one checkpoint or deployment artifact packed into RGB channels. Alpha is fixed at 255 so a canvas can read the values without alpha premultiplication. These colors are transport data, not a visualization of learned weights.</p>
+    <p class="note">Every card below is <strong>round-trip verified</strong>: the exported PNG was decoded by the Crystal-9 PNG decoder and checked against the source SHA-256. This page only displays the transport images; it does not yet execute model inference from canvas bytes.</p>
+    <section id="models" aria-live="polite">Loading manifest…</section>
+  </main>
+  <script>
+    const formatBytes = value => new Intl.NumberFormat().format(value) + " B";
+    const models = document.getElementById("models");
+    fetch("manifest.json")
+      .then(response => { if (!response.ok) throw new Error(`manifest request failed: ${response.status}`); return response.json(); })
+      .then(({models: entries}) => {
+        models.replaceChildren(...entries.map(model => {
+          const card = document.createElement("article");
+          card.innerHTML = `<div class="image-wrap"><a href="${model.png}"><img src="${model.png}" alt="Lossless RGB byte payload for ${model.name}, ${model.width} by ${model.height} pixels"></a></div>
+            <div class="content"><h2>${model.name}</h2><div class="status">${model.status}</div><dl>
+              <dt>Dimensions</dt><dd>${model.width} × ${model.height} px</dd>
+              <dt>Original</dt><dd>${formatBytes(model.source_bytes)}</dd>
+              <dt>PNG</dt><dd>${formatBytes(model.png_bytes)}</dd>
+              <dt>Transport</dt><dd>${model.transport}</dd>
+              <dt>Digest</dt><dd><code>${model.source_sha256}</code></dd>
+              <dt>Source</dt><dd><code>${model.source}</code></dd>
+            </dl></div>`;
+          return card;
+        }));
+      })
+      .catch(error => { models.textContent = `Unable to load gallery: ${error.message}`; });
+  </script>
+</body>
+</html>
