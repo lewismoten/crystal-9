@@ -18,3 +18,5 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["layout"] == "architecture-grouped-v2"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
+    assert metadata["legend"]["B"] == "bias column; one value per output row"
+    assert metadata["expert_layout"] == "3x3 complete expert blocks, layer 1 above layer 2"

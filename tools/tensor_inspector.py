@@ -13,13 +13,13 @@ import torch
 _SIGNATURE = b"\x89PNG\r\n\x1a\n"
 _CELL = 5
 _MARGIN = 14
-_HEADER_HEIGHT = 24
+_HEADER_HEIGHT = 36
 _GAP = 18
 _FONT = {
     "A": ("010", "101", "111", "101", "101"), "B": ("110", "101", "110", "101", "110"), "C": ("011", "100", "100", "100", "011"),
     "D": ("110", "101", "101", "101", "110"), "E": ("111", "100", "110", "100", "111"), "F": ("111", "100", "110", "100", "100"), "G": ("011", "100", "101", "101", "011"),
     "H": ("101", "101", "111", "101", "101"), "I": ("111", "010", "010", "010", "111"), "J": ("001", "001", "001", "101", "010"),
-    "K": ("101", "101", "110", "101", "101"), "M": ("101", "111", "111", "101", "101"), "N": ("101", "111", "111", "111", "101"),
+    "K": ("101", "101", "110", "101", "101"), "L": ("100", "100", "100", "100", "111"), "M": ("101", "111", "111", "101", "101"), "N": ("101", "111", "111", "111", "101"),
     "O": ("010", "101", "101", "101", "010"), "P": ("110", "101", "110", "100", "100"), "R": ("110", "101", "110", "101", "101"),
     "S": ("011", "100", "010", "001", "110"), "T": ("111", "010", "010", "010", "010"), "U": ("101", "101", "101", "101", "111"),
     "V": ("101", "101", "101", "101", "010"), "W": ("101", "101", "111", "111", "101", "101"), "X": ("101", "101", "010", "101", "101"),
@@ -92,8 +92,10 @@ def _render_tensor(rgb: bytearray, width: int, tensor: torch.Tensor, x: int, y: 
 def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], weight: str, bias: str, label: str, x: int, y: int) -> tuple[int, int]:
     _text(rgb, width, x, y, label, (226, 232, 240))
     grid_y = y + _HEADER_HEIGHT
+    _text(rgb, width, x, y + 12, "WEIGHTS", (148, 163, 184))
     weight_width, weight_height = _render_tensor(rgb, width, state[weight], x, grid_y)
     bias_x = x + weight_width + _CELL
+    _text(rgb, width, bias_x, y + 12, "BIAS", (148, 163, 184))
     _render_tensor(rgb, width, state[bias], bias_x, grid_y)
     return weight_width + _CELL * 2, max(weight_height, state[bias].numel() * _CELL) + _HEADER_HEIGHT
 
@@ -109,7 +111,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     state = _checkpoint_state(source)
     # Three complete expert columns are the widest section; avoid a fourth empty column.
     width = 800
-    height = 2070
+    height = 2260
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -119,40 +121,44 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
 
     y = _MARGIN
     _text(rgb, width, _MARGIN, y, "INPUTS", (148, 163, 184))
-    y += _HEADER_HEIGHT
+    _text(rgb, width, 350, y, "BIAS COLUMN", (148, 163, 184))
+    _text(rgb, width, 350, y + 12, "MATCHES MATRIX ROWS", (148, 163, 184))
+    y += _HEADER_HEIGHT + 12
     _render_single(rgb, width, state, "embedding.weight", "TOKEN_EMBED", _MARGIN, y)
     _render_single(rgb, width, state, "position.weight", "POSITION_EMBED", _MARGIN + 220, y)
     y += 110
 
     _text(rgb, width, _MARGIN, y, "ATTENTION", (148, 163, 184))
     y += _HEADER_HEIGHT
-    _, attention_height = _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "IN_PROJ_W + B", _MARGIN, y)
-    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "OUT_PROJ_W + B", 230, y)
+    _, attention_height = _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "INPUT PROJECTION", _MARGIN, y)
+    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "OUTPUT PROJECTION", 230, y)
     y += attention_height + _GAP
 
     _text(rgb, width, _MARGIN, y, "NORM_ROUTER_OUTPUT", (148, 163, 184))
     y += _HEADER_HEIGHT
-    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "NORM_W + B", _MARGIN, y)
-    _render_pair(rgb, width, state, "router.weight", "router.bias", "ROUTER_W + B", 90, y)
-    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT_W + B", 300, y)
-    y += 95
+    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "NORM", _MARGIN, y)
+    _render_pair(rgb, width, state, "router.weight", "router.bias", "ROUTER", 90, y)
+    _render_pair(rgb, width, state, "output.weight", "output.bias", "OUTPUT", 300, y)
+    y += 115
 
     _text(rgb, width, _MARGIN, y, "EXPERTS_0_TO_8", (148, 163, 184))
     y += _HEADER_HEIGHT
     expert_width = 235
-    expert_height = 390
+    expert_height = 420
     for expert in range(9):
         x = _MARGIN + (expert % 3) * (expert_width + _GAP)
         top = y + (expert // 3) * (expert_height + _GAP)
         _text(rgb, width, x, top, f"EXPERT_{expert}", (148, 163, 184))
-        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "L0_W + B", x, top + _HEADER_HEIGHT)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "L2_W + B", x, top + 205)
+        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "FIRST LAYER", x, top + _HEADER_HEIGHT)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "SECOND LAYER", x, top + 220)
 
     metadata = {
         "format": "crystal-9-tensor-inspector-v2", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-grouped-v2",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router_output", "experts", "output"],
+        "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
+        "expert_layout": "3x3 complete expert blocks, layer 1 above layer 2",
         "tensors": inventory, "width": width, "height": height,
     }
     rows = b"".join(b"\0" + rgb[row * width * 3 : (row + 1) * width * 3] for row in range(height))
