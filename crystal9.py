@@ -132,8 +132,10 @@ class TinyMoEPolicy(nn.Module):
         token_ids: torch.Tensor,
         int4_groups: frozenset[str] = frozenset({"q", "k", "v", "out"}),
         quantize_attention_biases: bool = False,
+        attention_bias_groups: frozenset[str] | None = None,
     ) -> torch.Tensor:
         """Custom runtime path with an explicit INT4-row attention inventory."""
+        attention_bias_groups = attention_bias_groups or (frozenset({"in", "out"}) if quantize_attention_biases else frozenset())
         batch, steps, width = hidden.shape
         heads = self.attention.num_heads
         head_width = width // heads
@@ -144,7 +146,7 @@ class TinyMoEPolicy(nn.Module):
                 if group in int4_groups:
                     rows = slice(index * width, (index + 1) * width)
                     projection_weight[rows] = quantize_rows_ste(projection_weight[rows], 4)
-        input_bias = quantize_ste(self.attention.in_proj_bias, 4) if quantize_attention_biases else self.attention.in_proj_bias
+        input_bias = quantize_ste(self.attention.in_proj_bias, 4) if "in" in attention_bias_groups else self.attention.in_proj_bias
         qkv = F.linear(hidden, projection_weight, input_bias)
         query, key, value = qkv.chunk(3, dim=-1)
         query = query.view(batch, steps, heads, head_width).transpose(1, 2)
@@ -158,7 +160,7 @@ class TinyMoEPolicy(nn.Module):
         attended = weights @ value
         attended = attended.transpose(1, 2).contiguous().view(batch, steps, width)
         output_weight = quantize_rows_ste(self.attention.out_proj.weight, 4) if "out" in int4_groups else self.attention.out_proj.weight
-        output_bias = quantize_ste(self.attention.out_proj.bias, 4) if quantize_attention_biases else self.attention.out_proj.bias
+        output_bias = quantize_ste(self.attention.out_proj.bias, 4) if "out" in attention_bias_groups else self.attention.out_proj.bias
         return F.linear(attended, output_weight, output_bias)
 
     def forward_mixed_int4_input_attention_groups(
@@ -166,12 +168,13 @@ class TinyMoEPolicy(nn.Module):
         token_ids: torch.Tensor,
         int4_groups: frozenset[str],
         quantize_attention_biases: bool = False,
+        attention_bias_groups: frozenset[str] | None = None,
     ) -> torch.Tensor:
         """INT4-row input tables plus explicitly selected attention projection groups."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
         hidden = F.embedding(token_ids, quantize_rows_ste(self.embedding.weight, 4), padding_idx=0)
         hidden = hidden + F.embedding(positions, quantize_rows_ste(self.position.weight, 4))
-        attended = self._int4_self_attention(hidden, token_ids, int4_groups, quantize_attention_biases)
+        attended = self._int4_self_attention(hidden, token_ids, int4_groups, quantize_attention_biases, attention_bias_groups)
         last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
         state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
         router_weights = torch.softmax(self.router(state), dim=-1)
@@ -192,9 +195,10 @@ class TinyMoEPolicy(nn.Module):
         token_ids: torch.Tensor,
         int4_groups: frozenset[str],
         quantize_attention_biases: bool = True,
+        attention_bias_groups: frozenset[str] | None = None,
     ) -> torch.Tensor:
         """Apply the selected INT4 layout, including attention biases when requested."""
-        return self.forward_mixed_int4_input_attention_groups(token_ids, int4_groups, quantize_attention_biases)
+        return self.forward_mixed_int4_input_attention_groups(token_ids, int4_groups, quantize_attention_biases, attention_bias_groups)
 
     def forward_mixed_int4_input_attention_q(self, token_ids: torch.Tensor) -> torch.Tensor:
         return self.forward_mixed_int4_input_attention_groups(token_ids, frozenset({"q"}))
@@ -293,6 +297,14 @@ def materialize_mixed_int4_input_attention_q_v_out(source: TinyMoEPolicy) -> Tin
 def materialize_mixed_int4_input_attention_q_v_out_k(source: TinyMoEPolicy) -> TinyMoEPolicy:
     """Materialize Q/V/output plus the final INT4-row K projection."""
     return materialize_mixed_int4_input_attention_groups(source, frozenset({"q", "k", "v", "out"}))
+
+
+def materialize_mixed_int4_input_attention_q_v_out_k_output_bias(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted all-attention weight layout plus only its output bias."""
+    materialized = materialize_mixed_int4_input_attention_q_v_out_k(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.bias.copy_(quantize_tensor(materialized.attention.out_proj.bias, 4))
+    return materialized
 
 
 def materialize_mixed_int4_input_attention_q_v_out_k_attention_biases(source: TinyMoEPolicy) -> TinyMoEPolicy:
