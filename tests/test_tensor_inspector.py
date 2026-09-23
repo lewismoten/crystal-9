@@ -15,9 +15,13 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v4"
+    assert metadata["layout"] == "architecture-flow-v6"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
-    assert metadata["expert_layout"] == "one horizontal row of nine complete expert blocks, layer 1 above layer 2"
+    assert metadata["expert_layout"] == "one Experts box with First layer and Second layer boxed within it"
     assert metadata["calculation_flow"] == ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"]
+    assert metadata["vocabulary"] == ["<pad>", "<bos>", "<eos>", "!", "a", "b", "c", "d", "e", "f", "g", "h", "i"]
+    assert metadata["font"] == "DejaVu Sans"
+    assert metadata["router_selection_label"] == "Selected: 2 experts"
+    assert metadata["border_legend"] == {"teal": "weight matrix", "orange": "bias vector"}
