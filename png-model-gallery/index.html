@@ -11,7 +11,9 @@
     h1 { margin: 0 0 8px; font-size: clamp(1.4rem, 3vw, 2rem); color: #d9f99d; }
     .lede, .note { color: #aab7c7; line-height: 1.55; max-width: 76ch; }
     .note { border-left: 3px solid #facc15; background: #171712; padding: 12px 16px; }
-    #models { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 18px; margin-top: 24px; }
+    .section-title { margin: 42px 0 8px; font-size: 1.25rem; color: #d9f99d; }
+    .inspector-note { color: #aab7c7; line-height: 1.55; max-width: 76ch; }
+    #models, #inspectors { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 18px; margin-top: 24px; }
     article { border: 1px solid #2c3949; border-radius: 10px; background: #121a24; overflow: hidden; }
     .image-wrap { min-height: 250px; display: grid; place-items: center; background: #06090d; padding: 16px; }
     img { width: min(100%, 360px); max-height: 360px; object-fit: contain; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid #42556b; }
@@ -29,6 +31,9 @@
     <p class="lede">Each image is the exact bytes of one checkpoint or deployment artifact packed into RGB channels. The PNGs are truecolor RGB and contain no alpha channel. These colors are transport data, not a visualization of learned weights.</p>
     <p class="note">Every card below is <strong>round-trip verified</strong>: the exported PNG was decoded by the Crystal-9 PNG decoder and checked against the source SHA-256. This page only displays the transport images; it does not yet execute model inference from canvas bytes.</p>
     <section id="models" aria-live="polite">Loading manifest…</section>
+    <h2 class="section-title">Derived tensor inspectors</h2>
+    <p class="inspector-note">These are not transport images and cannot reconstruct a checkpoint. Each cell is an actual loaded tensor value, arranged by tensor and normalized independently to its own maximum absolute value. Lime is positive, blue is negative, and dark cells are near zero.</p>
+    <section id="inspectors" aria-live="polite">Loading inspectors…</section>
   </main>
   <script>
     const formatBytes = value => new Intl.NumberFormat().format(value) + " B";
@@ -51,6 +56,23 @@
         }));
       })
       .catch(error => { models.textContent = `Unable to load gallery: ${error.message}`; });
+    const inspectors = document.getElementById("inspectors");
+    fetch("inspectors.json")
+      .then(response => { if (!response.ok) throw new Error(`inspector request failed: ${response.status}`); return response.json(); })
+      .then(({inspectors: entries}) => {
+        inspectors.replaceChildren(...entries.map(inspector => {
+          const card = document.createElement("article");
+          card.innerHTML = `<div class="image-wrap"><a href="${inspector.png}"><img src="${inspector.png}" alt="Derived tensor inspector for ${inspector.name}, ${inspector.tensor_count} tensors"></a></div>
+            <div class="content"><h2>${inspector.name}</h2><div class="status">Derived tensor inspector</div><dl>
+              <dt>Tensors</dt><dd>${inspector.tensor_count} actual checkpoint tensors</dd>
+              <dt>Dimensions</dt><dd>${inspector.width} × ${inspector.height} px</dd>
+              <dt>Color scale</dt><dd>${inspector.normalization}</dd>
+              <dt>Source digest</dt><dd><code>${inspector.source_sha256}</code></dd>
+            </dl></div>`;
+          return card;
+        }));
+      })
+      .catch(error => { inspectors.textContent = `Unable to load inspectors: ${error.message}`; });
   </script>
 </body>
 </html>
