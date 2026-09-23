@@ -239,14 +239,28 @@ def materialize_mixed_int4_input(source: TinyMoEPolicy) -> TinyMoEPolicy:
     return materialized
 
 
-def materialize_mixed_int4_input_attention_q(source: TinyMoEPolicy) -> TinyMoEPolicy:
-    """Materialize the input stage plus only the INT4-row Q projection."""
+def materialize_mixed_int4_input_attention_groups(source: TinyMoEPolicy, int4_groups: frozenset[str]) -> TinyMoEPolicy:
+    """Materialize input INT4 plus the specified attention projections."""
     materialized = materialize_mixed_int4_input(source)
     width = materialized.attention.embed_dim
     with torch.no_grad():
-        rows = slice(0, width)
-        materialized.attention.in_proj_weight[rows].copy_(quantize_rows(materialized.attention.in_proj_weight[rows], 4))
+        for index, group in enumerate(("q", "k", "v")):
+            if group in int4_groups:
+                rows = slice(index * width, (index + 1) * width)
+                materialized.attention.in_proj_weight[rows].copy_(quantize_rows(materialized.attention.in_proj_weight[rows], 4))
+        if "out" in int4_groups:
+            materialized.attention.out_proj.weight.copy_(quantize_rows(materialized.attention.out_proj.weight, 4))
     return materialized
+
+
+def materialize_mixed_int4_input_attention_q(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the input stage plus only the INT4-row Q projection."""
+    return materialize_mixed_int4_input_attention_groups(source, frozenset({"q"}))
+
+
+def materialize_mixed_int4_input_attention_v(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted Q stage plus the INT4-row V projection."""
+    return materialize_mixed_int4_input_attention_groups(source, frozenset({"q", "v"}))
 
 
 def materialize_mixed_int4_input_attention(source: TinyMoEPolicy) -> TinyMoEPolicy:
