@@ -32,6 +32,15 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The checkpoint's FP32 master has `181 / 294,778` misses; it is QAT state only and does not supersede the immutable F32 reference.
 - A packed INT3 artifact/runtime has not yet been exported or accepted.
 
+## Accepted INT3 scope 2
+
+`mixed-int3-suffix-output-bias`
+
+- Scope: accepted INT3 suffix plus `output.bias` as per-tensor INT3.
+- Source: accepted INT3 suffix checkpoint; no retraining was required because direct materialization preserved the exact policy.
+- Exact policy gate: **0 / 294,778** misses in both fake-QAT and separately materialized evaluation.
+- Immutable report: `artifacts/int3-suffix-output-bias-accepted-report.json`.
+
 ## Rejected INT3 input-table trial
 
 `mixed-int3-suffix-input`
