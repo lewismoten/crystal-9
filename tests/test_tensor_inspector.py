@@ -15,7 +15,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v7"
+    assert metadata["layout"] == "architecture-flow-v8"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
@@ -25,5 +25,9 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["font"] == "DejaVu Sans"
     assert metadata["router_selection_label"] == "Selected: 2 experts"
     assert metadata["router_selection_lines"] == ["Selected:", "2 experts"]
+    assert metadata["router_selection_shape"] == "gray outlined rectangle"
+    assert metadata["router_path"] == "continuous downward arrow touching the Experts outline"
     assert metadata["expert_return_path"] == "vertical upward arrow, parallel to router-to-experts, ending below Final output"
-    assert metadata["border_legend"] == {"teal": "weight matrix", "orange": "bias vector"}
+    assert metadata["intra_expert_arrows"] == "clear gap between first and second layer matrices"
+    assert metadata["border_legend"] == {"dim purple": "weight matrix", "dim cyan": "bias vector"}
+    assert metadata["experts_outline"] == "slate gray"

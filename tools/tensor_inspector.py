@@ -19,8 +19,9 @@ _TEXT_FONT = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
 _LABEL = (226, 232, 240)
 _MUTED = (148, 163, 184)
 _FLOW = (250, 204, 21)
-_WEIGHT_BORDER = (45, 212, 191)
-_BIAS_BORDER = (251, 146, 60)
+_EXPERT_BORDER = (100, 116, 139)
+_WEIGHT_BORDER = (118, 92, 160)
+_BIAS_BORDER = (64, 170, 180)
 _VOCABULARY = ["<pad>", "<bos>", "<eos>", "!", "a", "b", "c", "d", "e", "f", "g", "h", "i"]
 
 
@@ -64,6 +65,12 @@ def _rectangle(rgb: bytearray, width: int, x: int, y: int, box_width: int, box_h
         for py in range(y - offset, y + box_height + offset + 1):
             _pixel(rgb, width, x - offset, py, color)
             _pixel(rgb, width, x + box_width + offset, py, color)
+
+
+def _fill_rectangle(rgb: bytearray, width: int, x: int, y: int, box_width: int, box_height: int, color: tuple[int, int, int]) -> None:
+    for py in range(y, y + box_height):
+        for px in range(x, x + box_width):
+            _pixel(rgb, width, px, py, color)
 
 
 def _ellipse(rgb: bytearray, width: int, center_x: int, center_y: int, radius_x: int, radius_y: int) -> None:
@@ -175,7 +182,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
 
     top_y, flow_y = 100, 70
     _text(rgb, width, _MARGIN, 25, "Model flow left to right", _MUTED)
-    _text(rgb, width, 1540, 25, "Borders: teal weights | orange bias", _MUTED)
+    _text(rgb, width, 1540, 25, "Borders: dim purple weights | dim cyan bias", _MUTED)
     _render_single(rgb, width, state, "embedding.weight", "Token embedding", 20, top_y)
     _render_single(rgb, width, state, "position.weight", "Position embedding", 210, top_y)
     _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "Input projection", 400, top_y)
@@ -194,37 +201,41 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     router_center, router_bus_y = 1030, expert_y - 34
     expert_left, expert_right = 12, 1942
     expert_top, expert_bottom = expert_y - 42, 1270
-    _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _FLOW)
+    _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _EXPERT_BORDER)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
-    _arrow(rgb, width, router_center, 205, router_center, 395)
-    _line(rgb, width, router_center, 485, router_center, expert_top - 8)
-    _ellipse(rgb, width, router_center, 440, 94, 46)
-    _centered_text(rgb, width, router_center, 420, "Selected:", _LABEL)
-    _centered_text(rgb, width, router_center, 442, "2 experts", _LABEL)
+    _arrow(rgb, width, router_center, 205, router_center, expert_top - 1)
+    selection_x, selection_y, selection_width, selection_height = router_center - 92, 400, 184, 76
+    _fill_rectangle(rgb, width, selection_x, selection_y, selection_width, selection_height, (11, 16, 24))
+    _rectangle(rgb, width, selection_x, selection_y, selection_width, selection_height, _MUTED, 1)
+    _centered_text(rgb, width, router_center, 412, "Selected:", _LABEL)
+    _centered_text(rgb, width, router_center, 440, "2 experts", _LABEL)
     for expert in range(9):
         x = _MARGIN + expert * (expert_width + expert_gap)
         box_top, box_bottom = expert_y + 8, expert_y + 520
-        _rectangle(rgb, width, x - 8, box_top, 186, box_bottom - box_top, _MUTED, 1)
+        _rectangle(rgb, width, x - 8, box_top, 186, box_bottom - box_top, _EXPERT_BORDER, 1)
         _centered_text(rgb, width, x + 82, box_top + 8, f"Expert {expert + 1}", _LABEL)
         _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, expert_y + 48)
         _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 298)
-        _arrow(rgb, width, x + 92, expert_y + 214, x + 92, expert_y + 286)
+        _arrow(rgb, width, x + 92, expert_y + 260, x + 92, expert_y + 338)
     # The output panel shares the router's top-row alignment; this return arrow is parallel to router-to-experts.
     output_center = 1242
     _arrow(rgb, width, output_center, expert_top - 8, output_center, 135)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v7", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v8", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v7",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v8",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "nine Expert boxes, each containing its first and second layer",
         "calculation_flow": ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"],
         "vocabulary": _VOCABULARY, "font": "DejaVu Sans", "router_selection_label": "Selected: 2 experts",
-        "router_selection_lines": ["Selected:", "2 experts"],
+        "router_selection_lines": ["Selected:", "2 experts"], "router_selection_shape": "gray outlined rectangle",
+        "router_path": "continuous downward arrow touching the Experts outline",
         "expert_return_path": "vertical upward arrow, parallel to router-to-experts, ending below Final output",
-        "border_legend": {"teal": "weight matrix", "orange": "bias vector"}, "tensors": inventory, "width": width, "height": height,
+        "intra_expert_arrows": "clear gap between first and second layer matrices",
+        "border_legend": {"dim purple": "weight matrix", "dim cyan": "bias vector"}, "experts_outline": "slate gray",
+        "tensors": inventory, "width": width, "height": height,
     }
     rows = b"".join(b"\0" + rgb[row * width * 3 : (row + 1) * width * 3] for row in range(height))
     png = b"".join((_SIGNATURE, _chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)),
