@@ -50,6 +50,20 @@ def quantize_rows_ste(values: torch.Tensor, bits: int) -> torch.Tensor:
     return values + (quantized - values).detach()
 
 
+def quantize_groups(values: torch.Tensor, bits: int, group_size: int) -> torch.Tensor:
+    """Symmetrically quantize a vector using a separate scale per group."""
+    if values.ndim != 1:
+        raise ValueError("group quantization requires a rank-1 tensor")
+    if group_size < 1 or values.numel() % group_size:
+        raise ValueError("group size must divide the vector length")
+    return quantize_rows(values.reshape(-1, group_size), bits).reshape_as(values)
+
+
+def quantize_groups_ste(values: torch.Tensor, bits: int, group_size: int) -> torch.Tensor:
+    quantized = quantize_groups(values, bits, group_size)
+    return values + (quantized - values).detach()
+
+
 class TinyMoEPolicy(nn.Module):
     """One-layer causal policy network with a 32-wide routed MoE block."""
 
@@ -194,6 +208,7 @@ class TinyMoEPolicy(nn.Module):
         quantize_output_bias: bool = False,
         quantize_norm: bool = False,
         norm_int4_groups: frozenset[str] | None = None,
+        norm_weight_group_size: int | None = None,
     ) -> torch.Tensor:
         """INT4-row input tables plus explicitly selected attention projection groups."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -203,7 +218,11 @@ class TinyMoEPolicy(nn.Module):
         last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
         selected = attended[torch.arange(token_ids.shape[0], device=token_ids.device), last]
         norm_int4_groups = norm_int4_groups if norm_int4_groups is not None else (frozenset({"weight", "bias"}) if quantize_norm else frozenset())
-        state = F.layer_norm(selected, self.norm.normalized_shape, quantize_ste(self.norm.weight, 4) if "weight" in norm_int4_groups else self.norm.weight, quantize_ste(self.norm.bias, 4) if "bias" in norm_int4_groups else self.norm.bias, self.norm.eps)
+        norm_weight = self.norm.weight
+        if "weight" in norm_int4_groups:
+            norm_weight = quantize_groups_ste(norm_weight, 4, norm_weight_group_size) if norm_weight_group_size else quantize_ste(norm_weight, 4)
+        norm_bias = quantize_ste(self.norm.bias, 4) if "bias" in norm_int4_groups else self.norm.bias
+        state = F.layer_norm(selected, self.norm.normalized_shape, norm_weight, norm_bias, self.norm.eps)
         router_weight = quantize_rows_ste(self.router.weight, 4) if quantize_router_weight else self.router.weight
         router_bias = quantize_ste(self.router.bias, 4) if quantize_router_bias else self.router.bias
         router_weights = torch.softmax(F.linear(state, router_weight, router_bias), dim=-1)
@@ -405,6 +424,14 @@ def materialize_mixed_int4_norm_bias(source: TinyMoEPolicy) -> TinyMoEPolicy:
     materialized = materialize_mixed_int4_input_attention_q_v_out_k_output_bias_router_weight_input_bias_router_bias_expert_biases_output_bias(source)
     with torch.no_grad():
         materialized.norm.bias.copy_(quantize_tensor(materialized.norm.bias, 4))
+    return materialized
+
+
+def materialize_mixed_int4_full_parameters_grouped_norm_weight(source: TinyMoEPolicy, group_size: int = 8) -> TinyMoEPolicy:
+    """Materialize all parameters with LayerNorm weight INT4 in fixed-size groups."""
+    materialized = materialize_mixed_int4_norm_bias(source)
+    with torch.no_grad():
+        materialized.norm.weight.copy_(quantize_groups(materialized.norm.weight, 4, group_size))
     return materialized
 
 
