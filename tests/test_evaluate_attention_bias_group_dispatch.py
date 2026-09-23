@@ -18,11 +18,20 @@ class Probe:
         return logits
 
 
-def test_evaluate_passes_attention_bias_quantization_to_fake_runtime():
+def test_evaluate_passes_selected_attention_bias_groups_to_fake_runtime():
     tokenizer = GameTokenizer.from_design_file("design.json")
     model = Probe()
     groups = frozenset({"q", "k", "v", "out"})
+    bias_groups = frozenset({"out"})
 
-    evaluate(model, tokenizer, torch.device("cpu"), histories=[""], attention_int4_groups=groups, quantize_attention_biases=True)
+    evaluate(
+        model,
+        tokenizer,
+        torch.device("cpu"),
+        histories=[""],
+        attention_int4_groups=groups,
+        quantize_attention_biases=True,
+        attention_bias_groups=bias_groups,
+    )
 
-    assert model.received == (groups, True, None)
+    assert model.received == (groups, True, bias_groups)

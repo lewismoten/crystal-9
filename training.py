@@ -94,6 +94,7 @@ def evaluate(
     mixed_int4_input_attention: bool = False,
     attention_int4_groups: frozenset[str] | None = None,
     quantize_attention_biases: bool = False,
+    attention_bias_groups: frozenset[str] | None = None,
 ) -> dict[str, int]:
     model.eval()
     histories = histories if histories is not None else [history for history in legal_histories() if optimal_move(history) != "!"]
@@ -102,7 +103,7 @@ def evaluate(
         for start in range(0, len(histories), 4096):
             batch = histories[start : start + 4096]
             inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
-            logits = model.forward_mixed_int4_input_attention_groups(inputs, attention_int4_groups, quantize_attention_biases) if attention_int4_groups is not None else model.forward_mixed_int4_input_attention(inputs) if mixed_int4_input_attention else model.forward_mixed_int4_input(inputs) if mixed_int4_input else model.forward_mixed_int4(inputs) if mixed_int4 else model.forward_quantized(inputs, qat_bits) if qat_bits else model(inputs)
+            logits = model.forward_mixed_int4_input_attention_groups(inputs, attention_int4_groups, quantize_attention_biases, attention_bias_groups) if attention_int4_groups is not None else model.forward_mixed_int4_input_attention(inputs) if mixed_int4_input_attention else model.forward_mixed_int4_input(inputs) if mixed_int4_input else model.forward_mixed_int4(inputs) if mixed_int4 else model.forward_quantized(inputs, qat_bits) if qat_bits else model(inputs)
             predicted = logits.argmax(dim=-1).tolist()
             misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(predicted, batch))
     return {"legal_histories": len(histories), "policy_misses": misses}
