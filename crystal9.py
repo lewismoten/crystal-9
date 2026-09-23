@@ -104,6 +104,25 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_rows_ste(self.output.weight, 4), self.output.bias)
 
+    def forward_mixed_int4_with_expert_biases(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Baseline mixed INT4 layout with every routed-expert bias at INT4."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + self.position(positions)
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(self.router(state), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 4), quantize_ste(first.bias, 4))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 4), quantize_ste(second.bias, 4)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        return F.linear(state + (routed * top_weights.unsqueeze(-1)).sum(dim=1), quantize_rows_ste(self.output.weight, 4), self.output.bias)
+
     def forward_mixed_int4_input(self, token_ids: torch.Tensor) -> torch.Tensor:
         """INT4 row-quantize input tables; retain the proven INT4 suffix."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -269,6 +288,16 @@ def materialize_mixed_int4(source: TinyMoEPolicy) -> TinyMoEPolicy:
             expert[0].weight.copy_(quantize_rows(expert[0].weight, 4))
             expert[2].weight.copy_(quantize_rows(expert[2].weight, 4))
         materialized.output.weight.copy_(quantize_rows(materialized.output.weight, 4))
+    return materialized
+
+
+def materialize_mixed_int4_with_expert_biases(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the mixed INT4 layout including every routed-expert bias."""
+    materialized = materialize_mixed_int4(source)
+    with torch.no_grad():
+        for expert in materialized.experts:
+            expert[0].bias.copy_(quantize_tensor(expert[0].bias, 4))
+            expert[2].bias.copy_(quantize_tensor(expert[2].bias, 4))
     return materialized
 
 
