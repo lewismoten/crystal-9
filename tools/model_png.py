@@ -9,6 +9,7 @@ import struct
 import zlib
 
 _SIGNATURE = b"\x89PNG\r\n\x1a\n"
+_WIDTH = 128
 
 
 def _chunk(kind: bytes, data: bytes) -> bytes:
@@ -20,7 +21,7 @@ def encode_rgba_png(payload: bytes, *, model_name: str = "Crystal-9", precision:
     if not payload:
         raise ValueError("payload must not be empty")
     pixels = math.ceil(len(payload) / 3)
-    width = math.ceil(math.sqrt(pixels))
+    width = _WIDTH
     height = math.ceil(pixels / width)
     rgb = bytearray(width * height * 3)
     rgb[: len(payload)] = payload
