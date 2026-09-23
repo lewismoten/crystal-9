@@ -83,22 +83,116 @@ def padded(tokenizer: GameTokenizer, history: str) -> list[int]:
     return tokens + [0] * (9 - len(tokens))
 
 
-def evaluate(model: TinyMoEPolicy, tokenizer: GameTokenizer, device: torch.device) -> dict[str, int]:
+def evaluate(
+    model: TinyMoEPolicy,
+    tokenizer: GameTokenizer,
+    device: torch.device,
+    histories: list[str] | None = None,
+    qat_bits: int | None = None,
+) -> dict[str, int]:
     model.eval()
-    histories = [history for history in legal_histories() if optimal_move(history) != "!"]
+    histories = histories if histories is not None else [history for history in legal_histories() if optimal_move(history) != "!"]
     misses = 0
     with torch.no_grad():
         for start in range(0, len(histories), 4096):
             batch = histories[start : start + 4096]
-            logits = model(torch.tensor([padded(tokenizer, history) for history in batch], device=device))
+            inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
+            logits = model.forward_quantized(inputs, qat_bits) if qat_bits else model(inputs)
             predicted = logits.argmax(dim=-1).tolist()
             misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(predicted, batch))
     return {"legal_histories": len(histories), "policy_misses": misses}
 
 
+def load_reference_model(path: str | Path, vocab_size: int, device: torch.device) -> TinyMoEPolicy:
+    """Load a compatible F32 checkpoint as master weights for QAT."""
+    checkpoint = torch.load(path, map_location=device, weights_only=False)
+    model = TinyMoEPolicy(vocab_size).to(device)
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
+
+
+def qat_step(
+    model: TinyMoEPolicy,
+    optimizer: torch.optim.Optimizer,
+    inputs: torch.Tensor,
+    labels: torch.Tensor,
+    bits: int,
+) -> float:
+    """One master-weight update through the fake-quantized forward path."""
+    optimizer.zero_grad()
+    loss = nn.functional.cross_entropy(model.forward_quantized(inputs, bits), labels)
+    loss.backward()
+    optimizer.step()
+    return float(loss.item())
+
+
 def batch_ranges(total: int, batch_size: int):
     for start in range(0, total, batch_size):
         yield start, min(total, start + batch_size)
+
+
+def run_qat(
+    bits: int,
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+) -> dict:
+    """Fine-tune master weights through a selected low-bit forward path."""
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts-fp32.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.0008, weight_decay=0.0001)
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = torch.randperm(len(histories), device=device)
+        weighted_loss = 0.0
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]
+            optimizer.zero_grad()
+            qat_loss = nn.functional.cross_entropy(model.forward_quantized(inputs[index], bits), labels[index])
+            reference_loss = nn.functional.cross_entropy(model(inputs[index]), labels[index])
+            loss = 0.75 * qat_loss + 0.25 * reference_loss
+            loss.backward()
+            optimizer.step()
+            weighted_loss += float(loss.item()) * len(index)
+        if epoch == 1 or epoch % 25 == 0 or epoch == epochs:
+            progress = {
+                "epoch": epoch,
+                "bits": bits,
+                "loss": weighted_loss / len(histories),
+                "device": str(device),
+                "examples": len(histories),
+                "batch_size": batch_size,
+                "source_checkpoint": source.name,
+            }
+            (output / f"qat-int{bits}-progress.json").write_text(json.dumps(progress, indent=2) + "\n")
+    checkpoint_path = output / f"artifacts-qat-int{bits}.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "bits": bits, "source_checkpoint": source.name}, checkpoint_path)
+    model = model.to(device)
+    post_training = TinyMoEPolicy(tokenizer.vocab_size).to(device)
+    post_training.load_state_dict(model.state_dict())
+    with torch.no_grad():
+        for parameter in post_training.parameters():
+            parameter.copy_(quantize_tensor(parameter, bits))
+    report = {
+        "bits": bits,
+        "fp32_master": evaluate(model, tokenizer, device, histories),
+        "qat_forward": evaluate(model, tokenizer, device, histories, qat_bits=bits),
+        "post_training_quantized": evaluate(post_training, tokenizer, device, histories),
+        "source_checkpoint": source.name,
+    }
+    (output / f"qat-int{bits}-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 def run(epochs: int = 400, batch_size: int = 1024) -> dict:
