@@ -2,7 +2,7 @@
 
 ## Accepted INT4 layout
 
-`mixed-int4-row-input-attention-q-v-out-k-output-bias-router-weight-input-bias-router-bias-expert-biases-output-bias`
+`mixed-int4-full-parameters-norm-weight-group2`
 
 - Token and positional tables: INT4 per row
 - Attention Q/K/V/output projection weights: INT4 per row
@@ -13,9 +13,11 @@
 - All routed-expert matrix weights and biases: INT4 per row / INT4
 - Output weight: INT4 per row
 - Output bias: INT4
+- LayerNorm bias: INT4 per tensor
+- LayerNorm weight: INT4 in 16 contiguous groups of 2, each with an explicit group scale
 - Exact policy gate: **0 / 294,778** misses in both fake-QAT and materialized runtime
 
-The accepted output-bias run uses learning rate `0.0001` and seed `20260928`, initialized from the verified expert-bias stage. It is not a full-model INT4 claim: LayerNorm parameters, packed storage, independent packed runtime, and invalid-input publication gates remain unfinished.
+The accepted full-parameter run is a 300-epoch continuation from the one-miss group-of-2 checkpoint, using learning rate `0.00005` and seed `20260934`. It establishes an all-parameter INT4 *layout*, not packed storage or a runnable deployment artifact. Packed storage, an independent packed runtime, and invalid-input publication gates remain unfinished.
 
 ## Rejected router-weight trials
 
