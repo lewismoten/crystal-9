@@ -14,8 +14,12 @@ def test_model_byte_payload_round_trips_through_lossless_rgba_png():
     assert metadata["sha256"] == hashlib.sha256(payload).hexdigest()
     assert metadata["model_name"] == "Crystal-9 test"
     assert metadata["precision"] == "INT4"
+    assert metadata["format"] == "crystal-9-rgb-byte-png-v3"
+    assert metadata["model_tag"] == "lewismoten/crystal-9:Q4"
     assert metadata["footer_height"] > 0
     assert metadata["height"] > metadata["data_height"]
-    assert metadata["width"] * metadata["height"] * 3 >= len(payload)
+    assert metadata["footer_pixel_digest"] == metadata["sha256"]
+    assert metadata["footer_pixel_source_bytes"] == len(payload)
+    assert metadata["width"] * metadata["data_height"] * 3 >= len(payload)
     # PNG truecolor (type 2) has RGB channels only; it does not store alpha.
     assert png[25] == 2
