@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import torch
@@ -34,6 +36,31 @@ def _valid_live_history(history: str, symbols: frozenset[str], max_moves: int) -
             return False
         board[square] = "X" if index % 2 == 0 else "O"
     return _winner(board) is None and "." in board
+
+
+def _integrity_digest(manifest: dict) -> str:
+    """Hash the complete packed tensor inventory and format-critical metadata."""
+    digest = hashlib.sha256()
+    header = {
+        "format": manifest["format"],
+        "architecture": manifest["architecture"],
+        "norm_weight_group_size": manifest["norm_weight_group_size"],
+        "parameter_values": manifest["parameter_values"],
+    }
+    digest.update(json.dumps(header, sort_keys=True, separators=(",", ":")).encode())
+    for name in sorted(manifest["tensors"]):
+        record = manifest["tensors"][name]
+        metadata = {
+            "name": name,
+            "shape": list(record["shape"]),
+            "scheme": record["scheme"],
+            "group_size": record["group_size"],
+            "count": record["count"],
+        }
+        digest.update(json.dumps(metadata, sort_keys=True, separators=(",", ":")).encode())
+        digest.update(record["scales"].detach().cpu().float().contiguous().numpy().tobytes())
+        digest.update(record["packed"].detach().cpu().contiguous().numpy().tobytes())
+    return digest.hexdigest()
 
 
 def _encode(values: torch.Tensor, scheme: str, group_size: int | None = None) -> dict:
@@ -97,6 +124,7 @@ def export_packed_int4(source: TinyMoEPolicy, path: str | Path, norm_weight_grou
         "parameter_values": sum(value.numel() for value in source.parameters()),
         "tensors": tensors,
     }
+    manifest["integrity_sha256"] = _integrity_digest(manifest)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(manifest, path)
@@ -109,6 +137,8 @@ class PackedInt4Policy:
     def __init__(self, manifest: dict) -> None:
         if manifest.get("format") != FORMAT:
             raise ValueError("not a Crystal-9 packed INT4 artifact")
+        if manifest.get("integrity_sha256") != _integrity_digest(manifest):
+            raise ValueError("packed artifact integrity validation failed")
         self.manifest = manifest
         self.architecture = manifest["architecture"]
 
