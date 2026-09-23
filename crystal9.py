@@ -263,6 +263,11 @@ def materialize_mixed_int4_input_attention_v(source: TinyMoEPolicy) -> TinyMoEPo
     return materialize_mixed_int4_input_attention_groups(source, frozenset({"q", "v"}))
 
 
+def materialize_mixed_int4_input_attention_q_v_out(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the Q/V stage plus the INT4-row attention output projection."""
+    return materialize_mixed_int4_input_attention_groups(source, frozenset({"q", "v", "out"}))
+
+
 def materialize_mixed_int4_input_attention(source: TinyMoEPolicy) -> TinyMoEPolicy:
     """Materialize the input and attention INT4-row stage."""
     materialized = materialize_mixed_int4_input(source)
