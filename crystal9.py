@@ -32,6 +32,24 @@ def quantize_ste(values: torch.Tensor, bits: int) -> torch.Tensor:
     return values + (quantized - values).detach()
 
 
+def quantize_rows(values: torch.Tensor, bits: int) -> torch.Tensor:
+    """Symmetrically quantize every output row with its own scale."""
+    if values.ndim != 2:
+        raise ValueError("row quantization requires a rank-2 tensor")
+    if bits >= 32:
+        return values.clone()
+    levels = (1 << (bits - 1)) - 1
+    scale = values.detach().abs().amax(dim=1, keepdim=True)
+    safe_scale = torch.where(scale == 0, torch.ones_like(scale), scale)
+    quantized = torch.round(values / safe_scale * levels).clamp(-levels, levels) / levels * safe_scale
+    return torch.where(scale == 0, values, quantized)
+
+
+def quantize_rows_ste(values: torch.Tensor, bits: int) -> torch.Tensor:
+    quantized = quantize_rows(values, bits)
+    return values + (quantized - values).detach()
+
+
 class TinyMoEPolicy(nn.Module):
     """One-layer causal policy network with a 32-wide routed MoE block."""
 
@@ -60,6 +78,31 @@ class TinyMoEPolicy(nn.Module):
         routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return self.output(state)
+
+    def forward_mixed_int4(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """The exact mixed layout used for INT4 QAT and materialized gating.
+
+        Only routed-expert and output weight matrices use INT4 row quantization.
+        Attention, embeddings, router, norms, and all biases remain F32.
+        """
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + self.position(positions)
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(self.router(state), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 4), first.bias)
+            value = F.silu(value)
+            expert_outputs.append(F.linear(value, quantize_rows_ste(second.weight, 4), second.bias))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 4), self.output.bias)
 
     def forward_quantized(self, token_ids: torch.Tensor, bits: int) -> torch.Tensor:
         """QAT forward path for the embedding, routed MLP, router, and head.
@@ -92,6 +135,22 @@ class TinyMoEPolicy(nn.Module):
         routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_ste(self.output.weight, bits), quantize_ste(self.output.bias, bits))
+
+
+def materialize_mixed_int4(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Copy the exact INT4-row tensors used by ``forward_mixed_int4``."""
+    materialized = TinyMoEPolicy(
+        source.embedding.num_embeddings,
+        source.embedding.embedding_dim,
+        len(source.experts),
+    ).to(next(source.parameters()).device)
+    materialized.load_state_dict(source.state_dict())
+    with torch.no_grad():
+        for expert in materialized.experts:
+            expert[0].weight.copy_(quantize_rows(expert[0].weight, 4))
+            expert[2].weight.copy_(quantize_rows(expert[2].weight, 4))
+        materialized.output.weight.copy_(quantize_rows(materialized.output.weight, 4))
+    return materialized
 
 
 @dataclass(frozen=True)
