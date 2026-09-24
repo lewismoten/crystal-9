@@ -17,6 +17,8 @@ Crystal-9 is a clean-room, local 3×3 tic-tac-toe move-policy experiment. It is 
 
 This package contains three accepted Crystal-9 artifacts: the immutable F32 reference plus two independently validated packed-INT4 deployments. It is **not a Transformers checkpoint, GGUF, llama.cpp, or Ollama model**; use the included custom Python runtime.
 
+> **Need a GGUF or standard llama.cpp/Ollama compatibility?** Try [Palace-9](https://huggingface.co/lewismoten/palace-9), the earlier compatibility-focused Crystal-9 predecessor. Its published GGUF artifacts are the appropriate choice for those runtimes.
+
 ## Accepted artifacts
 
 Every listed artifact passed the exhaustive gate: **0 policy misses across 294,778 legal histories**.

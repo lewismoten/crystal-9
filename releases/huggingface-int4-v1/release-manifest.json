@@ -66,7 +66,7 @@
       "board": "three plain rows using ., x, and o"
     },
     "boundaries": [
-      "The packed artifacts are custom Python-runtime containers, not Transformers checkpoints, GGUF, llama.cpp, or Ollama models.",
+      "The packed artifacts are custom Python-runtime containers, not Transformers checkpoints, GGUF, llama.cpp, or Ollama models. Users needing GGUF or standard llama.cpp/Ollama compatibility should use Palace-9: https://huggingface.co/lewismoten/palace-9.",
       "The FP16-scale variant is an INT4-code artifact with FP16 dequantization scales; it is not a full-FP16 model."
     ]
   },

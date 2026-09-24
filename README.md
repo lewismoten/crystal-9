@@ -14,7 +14,7 @@ A clean-room experiment toward the smallest truthful local MoE tic-tac-toe polic
 
 FP32 is the source baseline. F16, Q6_K, Q4_K_M, Q3_K, Q2_K, and experimental 1-bit-family formats are candidates, not promises. A candidate is publishable only after the exact target runtime passes the complete legal-policy and invalid-input gates.
 
-The custom vocabulary is intentionally separate from the prior Ollama-compatible byte-BPE vocabulary. Crystal-9 must prove token-ID parity and target-runtime behavior before claiming Ollama compatibility.
+The custom vocabulary is intentionally separate from the prior Ollama-compatible byte-BPE vocabulary. Crystal-9 must prove token-ID parity and target-runtime behavior before claiming Ollama compatibility. For a GGUF or standard llama.cpp/Ollama-compatible model today, use [Palace-9](https://huggingface.co/lewismoten/palace-9).
 
 ## First gate
 
