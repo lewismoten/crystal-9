@@ -1,0 +1,14 @@
+{
+  "epoch": 200,
+  "layout": "mixed-int3-suffix-output-bias-router-weight-group4-router-bias",
+  "loss": 1.744919580710727e-05,
+  "device": "cuda:0",
+  "examples": 294778,
+  "batch_size": 1024,
+  "source_checkpoint": "/home/ai/crystal-9/artifacts/int3-suffix-output-bias-router-weight-group4-qat-200-seed20260943-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4.pt",
+  "trainable_tensors": [
+    "router.bias"
+  ],
+  "seed": 20260944,
+  "learning_rate": 0.0001
+}
