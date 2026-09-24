@@ -423,3 +423,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive preflight: fake-QAT **98,739 / 294,778** misses; materialized **98,739 / 294,778** misses. Matching totals establish path parity, not correctness, so the candidate is rejected and must not enter QAT.
 - Decision: **change strategy**. Preserve this rejected candidate and establish a different, independently parity-tested INT2 representation/granularity from immutable F32 before considering any isolated QAT.
 
+## Rejected INT2 four-value-group suffix preflight
+
+`mixed-int2-group4-suffix-direct-materialization`
+
+- Strategy change: the immutable F32 source was quantized only in the suffix (`experts.*.0.weight`, `experts.*.2.weight`, `output.weight`) using independent contiguous four-value INT2 groups, rather than the rejected 32-value rowwise groups.
+- TDD evidence: `tests/test_mixed_int2_suffix_group4_parity.py` was red for the absent fake-QAT/materialized layout, then green. The direct-preflight report test was likewise red for the absent runner, then green. Full suite: **114 passed**.
+- Exhaustive direct-materialization preflight: matching fake-QAT/materialized totals of **10,264 / 294,778** policy misses. Immutable report: `artifacts/rejected/int2-group4-suffix-direct-materialization-20260924-rejected/report.json`.
+- The layout uses 4,712 FP32 scales (four-value groups). It is a staged representation only, with no packed runtime or release integrity gate; its nonzero result is rejected and no QAT is authorized for this materially nonzero candidate.
+- Decision: **change strategy**. The next candidate must use a distinct independently parity-tested INT2 scope or granularity from immutable F32; F32, accepted INT4, accepted INT3, and both rejected INT2 artifacts remain immutable.
+

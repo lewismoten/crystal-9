@@ -1,0 +1,29 @@
+{
+  "layout": "mixed-int2-group4-suffix-direct-materialization",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "trainable_tensors": [],
+  "seed": null,
+  "learning_rate": null,
+  "epochs": 0,
+  "status": "rejected-direct-materialization",
+  "decision": "change-strategy",
+  "quantization": {
+    "scope": [
+      "experts.*.0.weight",
+      "experts.*.2.weight",
+      "output.weight"
+    ],
+    "bits": 2,
+    "group_size": 4,
+    "scale_type": "float32",
+    "scale_count": 4712,
+    "storage_efficient": false,
+    "representation": "four-value-group staged candidate; no packed runtime or release integrity gate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 10264,
+    "materialized_policy_misses": 10264
+  }
+}
