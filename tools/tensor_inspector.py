@@ -180,7 +180,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         for name, tensor in state.items()
     }
 
-    top_y, flow_y = 100, 70
+    top_y, flow_y = 100, 170
     _text(rgb, width, _MARGIN, 25, "Model flow left to right", _MUTED)
     _text(rgb, width, 1540, 25, "Borders: dim purple weights | dim cyan bias", _MUTED)
     _render_single(rgb, width, state, "embedding.weight", "Token embedding", 20, top_y)
@@ -192,7 +192,9 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1160, top_y)
     _render_vocabulary(rgb, width, 20, 230)
 
-    _arrow(rgb, width, 175, flow_y, 395, flow_y)
+    # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
+    _arrow(rgb, width, 185, flow_y, 205, flow_y)
+    _arrow(rgb, width, 375, flow_y, 395, flow_y)
     _arrow(rgb, width, 605, flow_y, 625, flow_y)
     _arrow(rgb, width, 825, flow_y, 845, flow_y)
     _arrow(rgb, width, 925, flow_y, 945, flow_y)
@@ -205,11 +207,11 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _EXPERT_BORDER)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
     _arrow(rgb, width, router_center, 205, router_center, expert_top - 1)
-    selection_x, selection_y, selection_width, selection_height = router_center - 92, 260, 184, 76
+    selection_x, selection_y, selection_width, selection_height = router_center - 92, 238, 184, 76
     _fill_rectangle(rgb, width, selection_x, selection_y, selection_width, selection_height, (11, 16, 24))
     _rectangle(rgb, width, selection_x, selection_y, selection_width, selection_height, _MUTED, 1)
-    _centered_text(rgb, width, router_center, 272, "Selected:", _LABEL)
-    _centered_text(rgb, width, router_center, 300, "2 experts", _LABEL)
+    _centered_text(rgb, width, router_center, 250, "Selected:", _LABEL)
+    _centered_text(rgb, width, router_center, 278, "2 experts", _LABEL)
     for expert in range(9):
         row, column = divmod(expert, 5)
         row_y = expert_y + row * 495
@@ -217,17 +219,17 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         box_top, box_bottom = row_y + 8, row_y + 490
         _rectangle(rgb, width, x - 5, box_top, 180, box_bottom - box_top, _EXPERT_BORDER, 1)
         _centered_text(rgb, width, x + 80, box_top + 8, f"Expert {expert + 1}", _LABEL)
-        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, row_y + 48)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, row_y + 255)
-        _arrow(rgb, width, x + 80, row_y + 265, x + 80, row_y + 293)
+        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, row_y + 24)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, row_y + 231)
+        _arrow(rgb, width, x + 80, row_y + 241, x + 80, row_y + 269)
     # The return uses a straight reserved lane and terminates immediately below the Final output weight matrix.
     output_return_x, output_matrix_bottom = 1240, 213
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v12", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v13", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v12",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v13",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
