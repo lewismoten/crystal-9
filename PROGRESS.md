@@ -686,3 +686,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The independent exhaustive runtime gate passed: **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Immutable candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-gzip-preflight-20260924/report.json`.
 - It is rejected as a transport improvement: gzip stored the 24,726 raw FP8 scale bytes in **18,023** bytes and produced a **52,443**-byte artifact, versus accepted LZMA's **17,552** scale bytes and **51,675**-byte artifact. Candidate artifact SHA-256: `f447a0db5a545b4ae0b6b7336f01a5ffca785076c47b97a874dbc2c071c71b82`; manifest integrity SHA-256: `1bee4b49b02be7107ee629905aa811692650466202f95db2c3bbdfcc841cf239`.
 - Decision: **change strategy**. No model process is active. Preserve the accepted LZMA transport; do not promote or extend gzip. A successor must establish fresh parity/integrity coverage and improve the complete serialized artifact or use a distinct hierarchy.
+
+## Rejected packed scalar INT2 Zstandard FP8-scale transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-zstd`
+
+- A distinct lossless Zstandard transport was evaluated against immutable `artifacts-fp32.pt`; it preserves scalar-FP8 scale bytes and genuine low-bit-first packed INT2 codes. Accepted F32, INT4, INT3, scalar INT2, zlib, and LZMA artifacts remain unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_scale_zstd.py` was red because its transport module was absent, then green after the minimal runtime implementation. `tests/test_verify_packed_int2_fp8_zstd.py` was red because its report runner was absent, then green. Full suite: **170 passed**.
+- The independent exhaustive runtime gate passed: **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Immutable candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-zstd-preflight-20260924/report.json`.
+- It is rejected as a transport improvement: Zstandard stored the 24,726 raw FP8 scale bytes in **17,730** bytes and produced a **51,867**-byte artifact, versus accepted LZMA's **17,552** scale bytes and **51,675**-byte artifact. Candidate artifact SHA-256: `3d87b984c3802291920586a529825dfbe53cc3f68429047b57c9f2a26347a064`; manifest integrity SHA-256: `f4b13f0e352fd814f8fb31bfb89cb6dd5af47066fef48948f67ebcc28d7db5ff`.
+- Decision: **change strategy**. No model process is active. Preserve the accepted LZMA transport; do not promote or extend Zstandard. Further work requires a distinct hierarchy/packing design rather than another generic lossless codec.

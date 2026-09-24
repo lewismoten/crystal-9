@@ -1,0 +1,24 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-zstd",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "/home/ai/crystal-9/artifacts/int2-packed-scalar-fp8-e4m3fn-scales-zstd-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-zstd.pt",
+  "artifact_bytes": 51867,
+  "artifact_sha256": "3d87b984c3802291920586a529825dfbe53cc3f68429047b57c9f2a26347a064",
+  "integrity_sha256": "f4b13f0e352fd814f8fb31bfb89cb6dd5af47066fef48948f67ebcc28d7db5ff",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first",
+    "scale_type": "float8_e4m3fn-zstd",
+    "scale_count": 24726,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 17730,
+    "storage_efficient": false,
+    "representation": "lossless Zstandard transport of scalar FP8 scales; research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}
