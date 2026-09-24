@@ -1,0 +1,15 @@
+{
+  "layout": "mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group4",
+  "source_checkpoint": "artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt",
+  "trainable_tensors": [],
+  "strategy": "direct-materialization",
+  "quantization": {
+    "embedding.weight": "INT3 contiguous groups of 4 per row",
+    "position.weight": "INT3 contiguous groups of 4 per row"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 2985,
+    "materialized_policy_misses": 2985
+  }
+}

@@ -121,3 +121,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Immutable report and checkpoint: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/report.json` (SHA-256 `a3ea618f8c967191a35167470b586645f88832b16c31cd2f090c4cf5f517b9b3`) and `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt` (SHA-256 `dc3e77ca17224775b24d61f616c351165ef90f31ee83809889ab45fc30ac06f1`).
 - Next ordered work: preflight isolated INT3 output bias and output weight together is not authorized because `output.bias` and `output.weight` are already accepted in the suffix. The next unresolved ordered component is the input embedding tables; retain the prior rejected rowwise candidate and establish a distinct parity-tested granularity strategy from this stronger predecessor. No packed INT3 artifact may be created while input, attention, and norm scopes remain F32 and independent runtime/integrity gates are absent.
 
+## Active INT3 groupwise-input candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group4`
+
+- Scope: accepted INT3 scope 5 plus `embedding.weight` and `position.weight` as independent contiguous four-value INT3 groups per row. This is a distinct granularity strategy from the rejected rowwise-input trial, sourced from the stronger accepted expert-bias predecessor.
+- Source: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt`.
+- Parity test: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_input_group4_parity.py` was red before implementation and now passes. The isolated-scope runner test verifies only the two input tables are trainable and records SHA-256 values for every frozen predecessor tensor.
+- Exhaustive direct-materialization preflight: `2,985 / 294,778` misses in fake-QAT and `2,985 / 294,778` materialized (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group4-direct-materialization-report.json`). QAT is required.
+- Active recipe: isolated 200-epoch QAT, seed `20260946`, learning rate `0.0001`, batch size `1024`; only the two named input tables are trainable. Acceptance remains exactly `0 / 294,778` in both paths.
+
