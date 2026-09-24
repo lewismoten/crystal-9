@@ -389,3 +389,19 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Accepted scope 14 covers every model parameter: expert matrices/biases, output tensors, router weight/bias, scalar-group embedding/position tables, attention Q/K/V/output/bias tensors, and scalar-group norm weight/bias.
 - Decision: **change strategy** from staged QAT to representation work. No training process is active because all ordered parameter groups passed their exact direct/QAT gates. The next authorized work is parity-tested packed INT3 runtime/integrity design; no packed release exists or is claimed.
 
+## Accepted packed INT3 runtime v1
+
+`crystal-9-packed-int3-v1`
+
+- Scope: the complete accepted mixed INT3 scope 14, sourced from `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt`. It preserves the recorded layouts: rowwise experts/output/Q, four-value router-weight groups, two-value K/V groups, and scalar groups elsewhere.
+- Artifact: `artifacts/int3-packed-v1-preflight-20260924-retry1/crystal-9-int3-packed-v1.pt` (`55,489` bytes; SHA-256 `2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc`; manifest integrity SHA-256 `5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a`). It stores genuine signed three-bit codes packed low-bit-first with explicit FP32 scales.
+- The independent `PackedInt3Policy` passed exhaustive packed-runtime evaluation with **0 / 294,778** legal-policy misses. Immutable report: `artifacts/int3-packed-v1-preflight-20260924-retry1/report.json`.
+- Runtime/integrity gates: a payload-bit flip is rejected by manifest SHA-256 validation; malformed, repeated-square, oversized, and post-terminal histories (`!`, `aa`, `abcdefghi`, `adbecf`) each return `!`.
+- TDD evidence: the runtime test was red for the absent module before implementation; the evaluator boundary test was red on an overlong encoded history and green after padding against encoded-token length. Targeted packed INT3 tests and the full suite pass (`107 passed`).
+- This is a complete packed INT3 runtime candidate, not a claim that every scale is storage-optimal: scalar-group tensors retain one FP32 scale per scalar. Its public/release manifest work remains separate.
+
+## INT3 stage status
+
+- Accepted scope 14 covers every model parameter, and packed runtime/integrity candidate `crystal-9-packed-int3-v1` now passes its independent exhaustive gate.
+- Decision: **advance** to release-manifest/provenance review. No training process is active; parameter QAT is complete and the next work is non-training release packaging verification.
+
