@@ -15,7 +15,7 @@ tags:
 
 Crystal-9 is a clean-room, local 3×3 tic-tac-toe move-policy experiment. It is a small sparse Mixture-of-Experts policy model: shared token and position embeddings, causal multi-head attention, LayerNorm, a router, nine two-layer experts, and top-2 routing.
 
-This package contains three accepted Crystal-9 artifacts: the immutable F32 reference plus two independently validated packed-INT4 deployments. It is **not a Transformers checkpoint, GGUF, llama.cpp, or Ollama model**; use the included custom Python runtime.
+This package contains four accepted Crystal-9 artifacts: the immutable F32 reference, two independently validated packed-INT4 deployments, and a complete mixed-layout packed-INT3 deployment. It is **not a Transformers checkpoint, GGUF, llama.cpp, or Ollama model**; use the included custom Python runtime.
 
 > **Need a GGUF or standard llama.cpp/Ollama compatibility?** Try [Palace-9](https://huggingface.co/lewismoten/palace-9), the earlier compatibility-focused Crystal-9 predecessor. Its published GGUF artifacts are the appropriate choice for those runtimes.
 
@@ -28,10 +28,11 @@ Every listed artifact passed the exhaustive gate: **0 policy misses across 294,7
 | `artifacts/artifacts-fp32.pt` | Immutable F32 source and evaluation baseline | 116,365 | `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c` |
 | `artifacts/crystal-9-int4-group2-packed-v1.pt` | Packed signed INT4 codes with FP32 dequantization scales; original accepted deployment | 46,547 | `10fb96a66aafb55b1841a0b90c3a2c2a8cfa0b24a67ac02da12434a2c722b9f9` |
 | `artifacts/crystal-9-int4-group2-packed-fp16-scales-v1.pt` | The same signed INT4-code layout with all 787 dequantization scales stored as FP16; accepted scale-compressed deployment | 46,299 | `63eee663a143ee478308144da406873c72c05b6d5226dbb2f5e329dacb1392eb` |
+| `artifacts/crystal-9-int3-packed-v1.pt` | Packed signed INT3 codes with recorded mixed FP32-scale layouts; complete accepted deployment | 55,489 | `2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc` |
 
 The FP16-scale artifact is **not a full-FP16 model**. Its model codes remain INT4; only the explicit dequantization scales use FP16. It is 248 bytes (0.53%) smaller than the FP32-scale packed artifact.
 
-A full-FP16 Crystal-9 model has not been created or accepted. INT3 remains staged research and is not included or presented as a deployment artifact.
+A full-FP16 Crystal-9 model has not been created or accepted. The INT3 artifact is complete and accepted, but its mixed groups retain FP32 scales—especially scalar groups—so it is not claimed to be scale-storage-optimal. Its internal manifest is independently protected by SHA-256 `5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a`.
 
 ## Why Crystal-9 followed Palace-9
 
@@ -76,6 +77,13 @@ print(runtime.predict("ae", tokenizer))
 PY
 ```
 
+To load the accepted INT3 artifact instead, change the two runtime lines to:
+
+```python
+from packed_int3 import PackedInt3Policy
+runtime = PackedInt3Policy.load("artifacts/crystal-9-int3-packed-v1.pt").eval()
+```
+
 To play the included terminal demo as X against Crystal-9 (O):
 
 ```bash
@@ -85,7 +93,7 @@ python3 play_crystal9.py
 
 The demo uses the accepted smaller INT4 artifact with FP16 dequantization scales. Enter one unoccupied `a`–`i` square per turn; the board prints as three rows containing `.`, `x`, and `o`, and the game stops at a win or draw. This is a local custom-runtime demo; it is not hosted inference.
 
-To evaluate all three staged artifacts on the exhaustive legal-history and invalid-input gates:
+To evaluate all four staged artifacts on the exhaustive legal-history and invalid-input gates:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 validation/verify_release.py

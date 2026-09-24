@@ -17,10 +17,7 @@
       "role": "immutable source and evaluation baseline",
       "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
       "bytes": 116365,
-      "acceptance": {
-        "legal_histories": 294778,
-        "policy_misses": 0
-      }
+      "acceptance": {"legal_histories": 294778, "policy_misses": 0}
     },
     {
       "id": "packed-int4-fp32-scales-v1",
@@ -30,11 +27,7 @@
       "scale_storage": "float32",
       "sha256": "10fb96a66aafb55b1841a0b90c3a2c2a8cfa0b24a67ac02da12434a2c722b9f9",
       "bytes": 46547,
-      "acceptance": {
-        "legal_histories": 294778,
-        "policy_misses": 0,
-        "invalid_history_result": "!"
-      }
+      "acceptance": {"legal_histories": 294778, "policy_misses": 0, "invalid_history_result": "!"}
     },
     {
       "id": "packed-int4-fp16-scales-v1",
@@ -44,20 +37,33 @@
       "scale_storage": "float16",
       "sha256": "63eee663a143ee478308144da406873c72c05b6d5226dbb2f5e329dacb1392eb",
       "bytes": 46299,
-      "acceptance": {
-        "legal_histories": 294778,
-        "policy_misses": 0,
-        "invalid_history_result": "!"
-      }
+      "acceptance": {"legal_histories": 294778, "policy_misses": 0, "invalid_history_result": "!"}
+    },
+    {
+      "id": "packed-int3-v1",
+      "path": "artifacts/crystal-9-int3-packed-v1.pt",
+      "format": "crystal-9-packed-int3-v1",
+      "role": "complete accepted mixed-layout INT3 packed deployment",
+      "scale_storage": "mixed: rowwise, group-4, group-2, and scalar FP32 scales",
+      "sha256": "2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc",
+      "integrity_sha256": "5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a",
+      "bytes": 55489,
+      "source_checkpoint": {
+        "path": "artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt",
+        "sha256": "c2bb0a43930eafa476c1bb82a63baf28cfa57827307ae83664a421e3b0b5ae92",
+        "inclusion": "not shipped; provenance only"
+      },
+      "source_report": "validation/packed-int3-acceptance.json",
+      "acceptance": {"legal_histories": 294778, "policy_misses": 0, "invalid_history_result": "!"}
     }
   ],
   "runtime": {
-    "entrypoint": "packed_int4.PackedInt4Policy",
-    "required_files": [
-      "crystal9.py",
-      "packed_int4.py",
-      "design.json"
-    ],
+    "entrypoints": {
+      "f32": "crystal9.TinyMoEPolicy",
+      "int4": "packed_int4.PackedInt4Policy",
+      "int3": "packed_int3.PackedInt3Policy"
+    },
+    "required_files": ["crystal9.py", "packed_int4.py", "packed_int3.py", "design.json"],
     "demo": {
       "path": "play_crystal9.py",
       "role": "local terminal tic-tac-toe demo; human is X and Crystal-9 is O",
@@ -67,7 +73,8 @@
     },
     "boundaries": [
       "The packed artifacts are custom Python-runtime containers, not Transformers checkpoints, GGUF, llama.cpp, or Ollama models. Users needing GGUF or standard llama.cpp/Ollama compatibility should use Palace-9: https://huggingface.co/lewismoten/palace-9.",
-      "The FP16-scale variant is an INT4-code artifact with FP16 dequantization scales; it is not a full-FP16 model."
+      "The FP16-scale variant is an INT4-code artifact with FP16 dequantization scales; it is not a full-FP16 model.",
+      "The INT3 artifact has mixed quantization group layouts and FP32 scales; scalar-group tensors retain one scale per scalar."
     ]
   },
   "validation": {
@@ -77,15 +84,9 @@
   },
   "exclusions": {
     "full_fp16_model": "not created or accepted for Crystal-9",
-    "int3": "ongoing staged research; no accepted full packed runtime or release artifact",
     "browser_projection": "separate derivative representation; not needed for Python runtime",
-    "tensor_inspectors": "decoded non-reconstructable visualizations; assets/int4-full-qat-tensor-workflow.png documents the QAT tensor workflow only"
+    "tensor_inspectors": "decoded non-reconstructable visualizations; assets/int4-full-qat-tensor-workflow.png documents the INT4 QAT tensor workflow only"
   },
-  "license": {
-    "spdx": "Apache-2.0",
-    "path": "LICENSE"
-  },
-  "publication_blockers": [
-    "hosted repository target and external upload approval"
-  ]
+  "license": {"spdx": "Apache-2.0", "path": "LICENSE"},
+  "publication_blockers": ["hosted repository target and external upload approval"]
 }

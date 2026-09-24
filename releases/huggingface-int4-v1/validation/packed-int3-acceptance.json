@@ -1,0 +1,20 @@
+{
+  "layout": "complete-mixed-int3-scope14",
+  "source_checkpoint": "artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt",
+  "format": "crystal-9-packed-int3-v1",
+  "artifact": "artifacts/int3-packed-v1-preflight-20260924-retry1/crystal-9-int3-packed-v1.pt",
+  "artifact_bytes": 55489,
+  "artifact_sha256": "2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc",
+  "integrity_sha256": "5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a",
+  "quantization": {
+    "bits": 3,
+    "packing": "3-bit codes packed low-bit-first",
+    "scale_type": "FP32",
+    "layout": "expert/output rowwise; router group4; Q rowwise; K/V group2; scalar groups elsewhere"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}

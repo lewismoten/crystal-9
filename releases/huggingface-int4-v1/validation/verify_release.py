@@ -14,6 +14,7 @@ STAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(STAGE))
 
 from crystal9 import GameTokenizer, TinyMoEPolicy  # noqa: E402
+from packed_int3 import PackedInt3Policy, evaluate_packed as evaluate_packed_int3  # noqa: E402
 from packed_int4 import PackedInt4Policy, evaluate_packed  # noqa: E402
 
 SQUARES = "abcdefghi"
@@ -140,6 +141,26 @@ def main() -> None:
             "acceptance": acceptance,
             "invalid_input_examples": invalid,
         })
+
+    int3_path = STAGE / "artifacts/crystal-9-int3-packed-v1.pt"
+    int3_runtime = PackedInt3Policy.load(int3_path).eval()
+    int3_acceptance = evaluate_packed_int3(int3_runtime, tokenizer, torch.device("cpu"), histories, optimal_move)
+    require(int3_acceptance, "packed-int3-v1")
+    int3_invalid = {history: int3_runtime.predict(history, tokenizer) for history in INVALID}
+    if any(result != "!" for result in int3_invalid.values()):
+        raise SystemExit(f"packed-int3-v1 invalid-history gate failed: {int3_invalid}")
+    records.append({
+        "id": "packed-int3-v1",
+        "path": "artifacts/crystal-9-int3-packed-v1.pt",
+        "format": int3_runtime.manifest["format"],
+        "scale_storage": "mixed FP32 scales",
+        "bytes": int3_path.stat().st_size,
+        "sha256": digest(int3_path),
+        "integrity_sha256": int3_runtime.manifest["integrity_sha256"],
+        "runtime": "PackedInt3Policy",
+        "acceptance": int3_acceptance,
+        "invalid_input_examples": int3_invalid,
+    })
 
     report = {"release_id": "crystal-9-accepted-artifacts-v1", "artifacts": records}
     (STAGE / "validation/release-acceptance.json").write_text(json.dumps(report, indent=2) + "\n")

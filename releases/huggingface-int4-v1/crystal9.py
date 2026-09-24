@@ -342,6 +342,366 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
 
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group2(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted INT3 scope plus only the position table in two-value INT3 groups."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 2))
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted INT3 scope plus a scalar-group INT3 position table."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group position scope plus a scalar-group INT3 token table."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_attention_q(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group input scope plus rowwise INT3 Q projection."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape
+        heads = self.attention.num_heads
+        head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        qkv = F.linear(hidden, projection_weight, self.attention.in_proj_bias)
+        query, key, value = qkv.chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2)
+        key = key.view(batch, steps, heads, head_width).transpose(1, 2)
+        value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf"))
+        scores = scores.masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = attended.transpose(1, 2).contiguous().view(batch, steps, width)
+        attended = F.linear(attended, self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_attention_q_k(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar inputs and INT3 Q projection plus rowwise INT3 K."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape
+        heads = self.attention.num_heads
+        head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[: 2 * width] = quantize_rows_ste(projection_weight[: 2 * width], 3)
+        qkv = F.linear(hidden, projection_weight, self.attention.in_proj_bias)
+        query, key, value = qkv.chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2)
+        key = key.view(batch, steps, heads, head_width).transpose(1, 2)
+        value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf"))
+        scores = scores.masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = attended.transpose(1, 2).contiguous().view(batch, steps, width)
+        attended = F.linear(attended, self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group4(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise INT3 Q, and four-value-group INT3 K."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 4)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise INT3 Q, and two-value-group INT3 K."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group4(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q, group-2 K, and group-4 V INT3."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 4)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q, and two-value-group K/V INT3."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 2)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q/output, and two-value-group K/V INT3."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 2)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_rows_ste(self.attention.out_proj.weight, 3), self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group4(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, Q rowwise, K/V and output in four-value INT3 groups."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 2)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_row_groups_ste(self.attention.out_proj.weight, 3, 4), self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group2(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q, and two-value-group K/V/output INT3."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 2)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q, group-two K/V, and scalar-group output INT3."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group output layout plus scalar-group attention input bias."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group attention layout plus scalar-group output bias."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1, 1)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group attention layout plus scalar-group norm weight."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1, 1, 1)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1_norm_bias_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group norm weight plus scalar-group norm bias."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1, 1, 1, 1)
+
+    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int, input_bias_group_size: int | None = None, output_bias_group_size: int | None = None, norm_weight_group_size: int | None = None, norm_bias_group_size: int | None = None) -> torch.Tensor:
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
+        hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
+        projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
+        projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 2)
+        input_bias = quantize_row_groups_ste(self.attention.in_proj_bias.unsqueeze(0), 3, input_bias_group_size).squeeze(0) if input_bias_group_size else self.attention.in_proj_bias
+        query, key, value = F.linear(hidden, projection_weight, input_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        output_bias = quantize_groups_ste(self.attention.out_proj.bias, 3, output_bias_group_size) if output_bias_group_size else self.attention.out_proj.bias
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_row_groups_ste(self.attention.out_proj.weight, 3, output_group_size), output_bias)
+        norm_weight = quantize_groups_ste(self.norm.weight, 3, norm_weight_group_size) if norm_weight_group_size else self.norm.weight
+        norm_bias = quantize_groups_ste(self.norm.bias, 3, norm_bias_group_size) if norm_bias_group_size else self.norm.bias
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = F.layer_norm(attended[torch.arange(batch, device=token_ids.device), last], self.norm.normalized_shape, norm_weight, norm_bias, self.norm.eps)
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3)); expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_rowwise(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted INT3 scope plus only the position table in rowwise INT3."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + F.embedding(positions, quantize_rows_ste(self.position.weight, 3))
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), quantize_ste(first.bias, 3))
+            expert_outputs.append(F.linear(F.silu(value), quantize_rows_ste(second.weight, 3), quantize_ste(second.bias, 3)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
     def forward_mixed_int3_suffix_input(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Second INT3 tracer: INT3 input tables plus the accepted INT3 suffix."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -643,6 +1003,158 @@ def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_e
     with torch.no_grad():
         materialized.embedding.weight.copy_(quantize_row_groups(materialized.embedding.weight, 3, 2))
         materialized.position.weight.copy_(quantize_row_groups(materialized.position.weight, 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group2(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted INT3 scope with a two-value-groupwise position table."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases(source)
+    with torch.no_grad():
+        materialized.position.weight.copy_(quantize_row_groups(materialized.position.weight, 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted INT3 scope with a scalar-group position table."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases(source)
+    with torch.no_grad():
+        materialized.position.weight.copy_(quantize_row_groups(materialized.position.weight, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the scalar-group position scope plus a scalar-group token table."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1(source)
+    with torch.no_grad():
+        materialized.embedding.weight.copy_(quantize_row_groups(materialized.embedding.weight, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_attention_q(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group inputs plus the rowwise INT3 Q projection."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[:width].copy_(quantize_rows(materialized.attention.in_proj_weight[:width], 3))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_attention_q_k(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs with rowwise INT3 Q and K projections."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[: 2 * width].copy_(quantize_rows(materialized.attention.in_proj_weight[: 2 * width], 3))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group4(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs, rowwise Q, and four-value-group K."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[:width].copy_(quantize_rows(materialized.attention.in_proj_weight[:width], 3))
+        materialized.attention.in_proj_weight[width:2 * width].copy_(quantize_row_groups(materialized.attention.in_proj_weight[width:2 * width], 3, 4))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs, rowwise Q, and two-value-group K."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[:width].copy_(quantize_rows(materialized.attention.in_proj_weight[:width], 3))
+        materialized.attention.in_proj_weight[width:2 * width].copy_(quantize_row_groups(materialized.attention.in_proj_weight[width:2 * width], 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group4(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs, rowwise Q, group-2 K, and group-4 V."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[2 * width:].copy_(quantize_row_groups(materialized.attention.in_proj_weight[2 * width:], 3, 4))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs, rowwise Q, and two-value-group K/V."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[2 * width:].copy_(quantize_row_groups(materialized.attention.in_proj_weight[2 * width:], 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar inputs, rowwise Q/output, and two-value-group K/V."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.weight.copy_(quantize_rows(materialized.attention.out_proj.weight, 3))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group4(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-input Q/K/V INT3 with four-value-group output projection."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 4))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group2(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-input Q/K/V INT3 with two-value-group output projection."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-input Q/K/V INT3 with scalar-group output projection."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group output projection and attention input bias."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(source)
+    with torch.no_grad():
+        materialized.attention.in_proj_bias.copy_(quantize_row_groups(materialized.attention.in_proj_bias.unsqueeze(0), 3, 1).squeeze(0))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group attention input and output biases."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.bias.copy_(quantize_groups(materialized.attention.out_proj.bias, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group attention layout and scalar-group norm weight."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1(source)
+    with torch.no_grad():
+        materialized.norm.weight.copy_(quantize_groups(materialized.norm.weight, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1_norm_bias_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group attention layout and both scalar-group norm tensors."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(source)
+    with torch.no_grad():
+        materialized.norm.bias.copy_(quantize_groups(materialized.norm.bias, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_rowwise(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the accepted INT3 scope with a rowwise INT3 position table."""
+    materialized = materialize_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases(source)
+    with torch.no_grad():
+        materialized.position.weight.copy_(quantize_rows(materialized.position.weight, 3))
     return materialized
 
 
