@@ -205,7 +205,7 @@ def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> No
 def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]:
     """Create a derived, architecture-flow map; it is not a byte transport artifact."""
     state = _checkpoint_state(source)
-    width, height = 2050, 1240
+    width, height = 1640, 1240
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -259,7 +259,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
     # Top-right legend uses unused canvas space, leaving the full lower-left lane for the execution contract.
-    legend_x = 1750
+    legend_x = 1400
     _rectangle(rgb, width, legend_x, 20, 30, 30, _WEIGHT_BORDER, 2)
     _text(rgb, width, legend_x + 46, 25, "Weights", _LABEL)
     _rectangle(rgb, width, legend_x, 55, 30, 30, _BIAS_BORDER, 2)
@@ -276,7 +276,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v20", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v21", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -288,7 +288,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v20",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v21",
         "legend_location": "top-right", "execution_contract_panel": {"location": "bottom-left", "bounds": [20, 750, 570, 470]},
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
