@@ -493,3 +493,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The representation has 20,438 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
 - Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 attention Q rows (`attention.in_proj_weight[:32]`) from this accepted scope, with a distinct parity test and exhaustive gate before any QAT; K/V/output projection, attention biases, and norm tensors remain F32.
 
+## Rejected INT2 scalar input-table plus attention-Q preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-direct-materialization`
+
+- The scalar INT2 input-table scope was independently parity-tested with Q rows (`attention.in_proj_weight[:32]`) at rowwise INT2. The parity and direct-preflight tests were red for absent APIs and green after minimal implementations.
+- Exhaustive direct materialization from immutable F32 produced matching **3,954 / 294,778** fake-QAT/materialized-policy misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-direct-materialization-20260924/report.json`.
+- This materially nonzero candidate is rejected. No QAT was started; matching outcomes establish parity, not policy correctness. Preserve it as rejected evidence.
+- Decision: **change strategy**. There is no active INT2 training job: the next attention candidate must change scope or quantization granularity and have its own red-to-green parity test; it must not extend this rowwise-Q direct candidate.
+
