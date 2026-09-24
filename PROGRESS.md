@@ -195,5 +195,22 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 ## INT3 input stage status
 
 - Accepted staged scope is now scope 7: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), `router.bias`, and scalar-group position and token tables; attention and norm tensors remain F32.
-- No training process is active because both scalar-group input-table layouts passed direct materialization without QAT. The next unresolved component is attention; it requires its own parity-tested direct-materialization preflight before isolated QAT is justified.
+- Both scalar-group input-table layouts passed direct materialization without QAT.
+
+## Accepted INT3 scope 8
+
+`mixed-int3-scalar-input-attention-q`
+
+- Scope: accepted INT3 scope 7 plus only the Q rows (`attention.in_proj_weight[:32]`) in rowwise INT3. K/V rows, attention output projection, both attention biases, and norm tensors remain F32.
+- The Q-layout fake-QAT/materialized parity test was red before implementation and now passes: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_attention_q_parity.py`.
+- Direct materialization from the immutable scope-5 checkpoint missed matching `16 / 294,778` legal policies, so QAT was required.
+- Initial isolated QAT trained only Q rows for 200 epochs, seed `20260949`, learning rate `0.0001`, and reached matching `2 / 294,778` misses. It remains immutable rejected evidence.
+- One controlled continuation changed only the learning rate to `0.00005` for 100 epochs from that two-miss checkpoint, preserving every frozen tensor by SHA-256. It reached matching **0 / 294,778** fake-QAT and materialized-policy misses.
+- Immutable reports: `artifacts/int3-scalar-input-attention-q-qat-200-seed20260949-lr1e-4/report.json` and `artifacts/int3-scalar-input-attention-q-qat-continue-100-seed20260949-lr5e-5/report.json`.
+- This is still a staged mixed-precision model, not a packed INT3 artifact or full-parameter INT3 model.
+
+## INT3 stage status
+
+- Accepted staged scope is now scope 8: experts, output, router, scalar-group token and position tables, and attention Q rows are INT3 under their recorded layouts. Attention K/V/output, attention biases, and norm tensors remain F32.
+- No training process is active: the controlled Q continuation reached the exact gate. The next unresolved component is attention K, which needs a new parity-tested direct-materialization preflight.
 
