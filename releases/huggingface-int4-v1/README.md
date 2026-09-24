@@ -1,6 +1,6 @@
 ---
 library_name: crystal-9-custom
-license: other
+license: apache-2.0
 pipeline_tag: text-classification
 tags:
   - tic-tac-toe
@@ -105,4 +105,4 @@ Browser projection files are separate derivative representations and are not req
 
 ## License
 
-License selection is pending repository-owner confirmation. Do not redistribute this staged package until a license file has been added and the hosted release is approved.
+This staged package is licensed under [Apache License 2.0](LICENSE). Hosted publication still requires repository-owner approval.

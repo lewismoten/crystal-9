@@ -81,8 +81,11 @@
     "browser_projection": "separate derivative representation; not needed for Python runtime",
     "tensor_inspectors": "decoded non-reconstructable visualizations; assets/int4-full-qat-tensor-workflow.png documents the QAT tensor workflow only"
   },
+  "license": {
+    "spdx": "Apache-2.0",
+    "path": "LICENSE"
+  },
   "publication_blockers": [
-    "license selection by repository owner",
     "hosted repository target and external upload approval"
   ]
 }
