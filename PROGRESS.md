@@ -483,3 +483,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The representation has 20,022 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
 - Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 `embedding.weight` from this accepted scope, with a distinct parity test and exhaustive gate before any QAT; attention and norm tensors remain F32.
 
+## Accepted INT2 scalar suffix through both input tables preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-direct-materialization`
+
+- Immutable F32 source (`artifacts-fp32.pt`, SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with scalar-group INT2 on the complete previous scope plus `embedding.weight`; zero tensors were trainable and no QAT ran.
+- TDD evidence: the fake-QAT/materialized parity test failed for the absent layout and then passed after minimal implementation; the direct-preflight runner test likewise failed for its absent API and then passed. Full suite: **127 passed**.
+- Exhaustive direct-materialization gate passed: **0 / 294,778** legal-policy misses in fake-QAT and independently materialized runtime. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-direct-materialization-20260924/report.json`.
+- The representation has 20,438 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
+- Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 attention Q rows (`attention.in_proj_weight[:32]`) from this accepted scope, with a distinct parity test and exhaustive gate before any QAT; K/V/output projection, attention biases, and norm tensors remain F32.
+
