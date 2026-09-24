@@ -1,0 +1,24 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-bzip2",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "/home/ai/crystal-9/artifacts/int2-packed-scalar-fp8-e4m3fn-scales-bzip2-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-bzip2.pt",
+  "artifact_bytes": 53265,
+  "artifact_sha256": "a3666d226741b2240880f47d0f687a270ae8cdedd9421fc12b6de11b0d52233d",
+  "integrity_sha256": "cb6e4d77ec71e323f6195a7610aae0b725c13b555be88eb467257f177aa83351",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first",
+    "scale_type": "float8_e4m3fn-bzip2",
+    "scale_count": 24726,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 18537,
+    "storage_efficient": false,
+    "representation": "lossless BZIP2 transport of scalar FP8 scales; research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}

@@ -656,3 +656,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma.pt` (`51,675` bytes; SHA-256 `7885932804257775709d90aa40972da15c6df57571f00ab29a122bc8ca267489`; manifest integrity SHA-256 `b71b4ee1c613ffe81dd2614458e36665e5f3a5a2e001893298c148c903ce843d`). The 24,726 raw FP8 scale bytes encode to 17,552 LZMA bytes.
 - This improves the exact zlib candidate by 768 bytes, but remains a scalar-scale hierarchy research artifact rather than a compact/deployable INT2 release; release manifest and distribution integrity gates remain absent.
 - Decision: **advance**. No training process is active. The next representation candidate must be independently parity-tested and either find a further lossless transport/packing improvement or define a separate hierarchy; it must preserve all accepted artifacts and pass exhaustive runtime plus integrity gates.
+
+## Rejected packed scalar INT2 lossless FP8-scale BZIP2 transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-bzip2`
+
+- A distinct lossless BZIP2 transport was tested against the immutable F32 source and the accepted scalar-FP8 INT2 layout; it preserves packed codes and FP8 scale bytes. Earlier accepted artifacts remain unchanged.
+- TDD evidence: the BZIP2 runtime/integrity test was red for the absent module, then green; the preflight report builder test was red for the absent runner, then green. Full suite: **162 passed**.
+- The independent packed-runtime gate passed exactly: **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-bzip2-preflight-20260924/report.json`.
+- It is rejected as a compression-improvement candidate: its 24,726 raw FP8 scale bytes compressed to **18,537** bytes and its artifact is **53,265** bytes, both worse than accepted LZMA transport (**17,552** scale bytes; **51,675**-byte artifact). It is not a release or deployment claim.
+- Decision: **change strategy**. No model process is active. Do not extend or promote BZIP2; retain accepted LZMA transport. Any successor needs its own parity/integrity gate and must provide a real packing/transport improvement or a distinct hierarchy.
