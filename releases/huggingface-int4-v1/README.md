@@ -17,11 +17,11 @@ Crystal-9 is a clean-room, local 3×3 tic-tac-toe move-policy experiment. It is 
 
 This package contains four accepted Crystal-9 artifacts: the immutable F32 reference, two independently validated packed-INT4 deployments, and a complete mixed-layout packed-INT3 deployment. It is **not a Transformers checkpoint, GGUF, llama.cpp, or Ollama model**; use the included custom Python runtime.
 
-> **Need a GGUF or standard llama.cpp/Ollama compatibility?** Try [Palace-9](https://huggingface.co/lewismoten/palace-9), the earlier compatibility-focused Crystal-9 predecessor. Its published GGUF artifacts are the appropriate choice for those runtimes.
+> **Need a GGUF or standard llama.cpp/Ollama compatibility?** Try [Palace-9](https://huggingface.co/lewismoten/palace-9), the earlier compatibility-focused predecessor to Crystal-9. Its published GGUF artifacts are the appropriate choice for those runtimes.
 
 ## Accepted artifacts
 
-Every listed artifact passed the exhaustive gate: **0 policy misses across 294,778 legal histories**.
+Every listed artifact passed the exhaustive gate: **0 policy misses across 294,778 nonterminal legal histories**. For each history, the selected move must match the minimax move selected under the validator's fixed tie order.
 
 ### F32 reference
 
@@ -42,6 +42,8 @@ Every listed artifact passed the exhaustive gate: **0 policy misses across 294,7
 
 `artifacts/crystal-9-int3-packed-v1.pt` — complete accepted deployment: packed signed INT3 codes with the recorded mixed FP32-scale layouts.
 **55,489 bytes** · SHA-256: `2bc68216b05d…47747b2122174dc8574fc`
+
+This exact INT3 deployment is **9,190 bytes larger** than the 46,299-byte INT4 artifact with FP16 scales because its mixed layout retains substantial FP32 scale overhead, including scalar-group tensors.
 
 Full artifact digests, acceptance evidence, and source provenance are in `release-manifest.json`; `SHA256SUMS` verifies every shipped file.
 
@@ -142,4 +144,4 @@ CRYSTAL-9 was designed and directed by Lewis Moten. Its code and documentation w
 
 ## License
 
-This staged package is licensed under [Apache License 2.0](LICENSE). Hosted publication still requires repository-owner approval.
+This package is licensed under [Apache License 2.0](LICENSE).

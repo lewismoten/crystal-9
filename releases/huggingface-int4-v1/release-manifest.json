@@ -1,6 +1,6 @@
 {
   "release_id": "crystal-9-accepted-artifacts-v1",
-  "release_status": "staged-not-published",
+  "release_status": "published",
   "architecture": {
     "model_family": "custom Crystal-9 sparse MoE policy",
     "vocabulary_size": 13,
@@ -101,5 +101,8 @@
     "tensor_inspectors": "decoded non-reconstructable visualizations; assets/int4-full-qat-tensor-workflow.png documents the INT4 QAT tensor workflow only"
   },
   "license": {"spdx": "Apache-2.0", "path": "LICENSE"},
-  "publication_blockers": ["hosted repository target and external upload approval"]
+  "publication": {
+    "status": "public",
+    "repository": "https://huggingface.co/lewismoten/crystal-9"
+  }
 }
