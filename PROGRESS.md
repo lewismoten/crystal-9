@@ -70,3 +70,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Every candidate is rejected: parity matched, but no candidate achieved the required `0 / 294,778`. Preserve these artifacts as evidence; do not export them as accepted INT3 model state or keep repeating the same recipe.
 - Next work must be a separately preflighted strategy change or controlled continuation from a one-miss candidate, with exactly one changed variable.
 
+## Active INT3 router-weight candidate
+
+`mixed-int3-suffix-output-bias-router-weight`
+
+- Scope: accepted INT3 suffix plus `output.bias`, with `router.weight` added as rowwise INT3. This is independent of the rejected router-bias path.
+- Parity test: `tests/test_mixed_int3_suffix_output_bias_router_weight_parity.py` was red before implementation and passes after it; isolated-scope provenance test also passes.
+- Direct materialization from the accepted suffix checkpoint: `142 / 294,778` misses in both fake-QAT and materialized paths, so QAT is required.
+- Active recipe: 200 epochs, seed `20260942`, learning rate `0.0001`, with only `router.weight` trainable and all predecessor tensors SHA-256 asserted frozen.
+
