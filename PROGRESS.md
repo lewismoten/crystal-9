@@ -676,3 +676,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The independent exhaustive runtime gate passed: **0 /294,778** legal-policy misses. Immutable candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-raw-preflight-20260924/report.json`.
 - It is rejected as a transport improvement: raw-LZMA reduced the scale payload from accepted LZMA's **17,552** to **17,495** bytes, but expanded the serialized artifact from **51,675** to **51,891** bytes. Candidate artifact SHA-256: `d9081f376f4c0066fe6675a30ebf8014d4ffcdd57ece9952e981c71e1a3c81ec`; manifest integrity SHA-256: `e627531e631bcf8c891afddc5c212dba30077b90e646c07f38dc0f1f04d50fe2`.
 - Decision: **change strategy**. No model process is active. Preserve the accepted LZMA transport; do not promote or extend raw-LZMA. A successor must establish fresh parity/integrity coverage and improve the complete serialized artifact or use a distinct hierarchy.
+
+## Rejected packed scalar INT2 gzip FP8-scale transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-gzip`
+
+- A distinct lossless gzip transport was evaluated against immutable `artifacts-fp32.pt`; it preserves scalar-FP8 scale bytes and genuine low-bit-first packed INT2 codes. Accepted F32, INT4, INT3, scalar INT2, zlib, and LZMA artifacts remain unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_scale_gzip.py` was red because its transport module was absent, then green after the minimal runtime implementation. `tests/test_verify_packed_int2_fp8_gzip.py` was red because its report runner was absent, then green. Full suite: **167 passed**.
+- The independent exhaustive runtime gate passed: **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Immutable candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-gzip-preflight-20260924/report.json`.
+- It is rejected as a transport improvement: gzip stored the 24,726 raw FP8 scale bytes in **18,023** bytes and produced a **52,443**-byte artifact, versus accepted LZMA's **17,552** scale bytes and **51,675**-byte artifact. Candidate artifact SHA-256: `f447a0db5a545b4ae0b6b7336f01a5ffca785076c47b97a874dbc2c071c71b82`; manifest integrity SHA-256: `1bee4b49b02be7107ee629905aa811692650466202f95db2c3bbdfcc841cf239`.
+- Decision: **change strategy**. No model process is active. Preserve the accepted LZMA transport; do not promote or extend gzip. A successor must establish fresh parity/integrity coverage and improve the complete serialized artifact or use a distinct hierarchy.
