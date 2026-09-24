@@ -15,7 +15,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v16"
+    assert metadata["layout"] == "architecture-flow-v18"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
@@ -30,4 +30,5 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["expert_return_path"] == "straight upward arrow ends below Final output matrix"
     assert metadata["intra_expert_arrows"] == "compact clear gap between first and second layer matrices"
     assert metadata["border_legend"] == {"dim purple": "weight matrix", "dim cyan": "bias vector"}
+    assert metadata["value_legend"] == {"yellow": "large positive", "green": "moderate positive", "black": "neutral / zero", "blue": "negative", "bright blue": "large negative"}
     assert metadata["experts_outline"] == "slate gray"

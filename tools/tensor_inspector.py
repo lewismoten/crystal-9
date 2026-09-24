@@ -85,8 +85,10 @@ def _ellipse(rgb: bytearray, width: int, center_x: int, center_y: int, radius_x:
 
 def _color(value: float) -> tuple[int, int, int]:
     strength = min(abs(value), 1.0)
-    base = int(18 + 222 * strength)
-    return (22, int(35 + 95 * (1 - strength)), base) if value < 0 else (base, int(45 + 175 * strength), 26)
+    if value < 0:
+        return (22, int(35 + 95 * (1 - strength)), int(18 + 222 * strength))
+    # Keep moderate positive values visibly green before high positive values transition to yellow.
+    return (int(18 + 222 * strength ** 3), int(60 + 160 * strength), 26)
 
 
 def _checkpoint_state(source: Path) -> dict[str, torch.Tensor]:
@@ -228,17 +230,27 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     output_return_x, output_matrix_bottom = 1240, 153
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
-    # Lower-left legend keeps the border semantics visible without competing with the column headers.
-    legend_x, weights_y, bias_y = 20, 1153, 1193
-    _rectangle(rgb, width, legend_x, weights_y, 30, 30, _WEIGHT_BORDER, 2)
-    _text(rgb, width, legend_x + 46, weights_y + 5, "Weights", _LABEL)
-    _rectangle(rgb, width, legend_x, bias_y, 30, 30, _BIAS_BORDER, 2)
-    _text(rgb, width, legend_x + 46, bias_y + 5, "Bias", _LABEL)
+    # Lower-left legend keeps border and per-value color semantics visible without competing with the column headers.
+    legend_x = 20
+    _rectangle(rgb, width, legend_x, 1023, 30, 30, _WEIGHT_BORDER, 2)
+    _text(rgb, width, legend_x + 46, 1028, "Weights", _LABEL)
+    _rectangle(rgb, width, legend_x, 1058, 30, 30, _BIAS_BORDER, 2)
+    _text(rgb, width, legend_x + 46, 1063, "Bias", _LABEL)
+    for y, color, label in (
+        (1093, _color(1.0), "large positive"),
+        (1120, _color(0.5), "moderate positive"),
+        (1147, (11, 16, 24), "neutral / zero"),
+        (1174, _color(-0.5), "negative"),
+        (1201, _color(-1.0), "large negative"),
+    ):
+        _fill_rectangle(rgb, width, legend_x, y, 20, 20, color)
+        _rectangle(rgb, width, legend_x, y, 20, 20, _MUTED, 1)
+        _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v16", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v18", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v16",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v18",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
@@ -248,7 +260,9 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         "router_path": "continuous downward arrow touching the Experts outline",
         "expert_return_path": "straight upward arrow ends below Final output matrix",
         "intra_expert_arrows": "compact clear gap between first and second layer matrices",
-        "border_legend": {"dim purple": "weight matrix", "dim cyan": "bias vector"}, "experts_outline": "slate gray",
+        "border_legend": {"dim purple": "weight matrix", "dim cyan": "bias vector"},
+        "value_legend": {"yellow": "large positive", "green": "moderate positive", "black": "neutral / zero", "blue": "negative", "bright blue": "large negative"},
+        "experts_outline": "slate gray",
         "tensors": inventory, "width": width, "height": height,
     }
     rows = b"".join(b"\0" + rgb[row * width * 3 : (row + 1) * width * 3] for row in range(height))
