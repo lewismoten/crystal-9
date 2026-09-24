@@ -1,0 +1,24 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma.pt",
+  "artifact_bytes": 51675,
+  "artifact_sha256": "7885932804257775709d90aa40972da15c6df57571f00ab29a122bc8ca267489",
+  "integrity_sha256": "b71b4ee1c613ffe81dd2614458e36665e5f3a5a2e001893298c148c903ce843d",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first",
+    "scale_type": "float8_e4m3fn-lzma",
+    "scale_count": 24726,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 17552,
+    "storage_efficient": false,
+    "representation": "lossless LZMA transport of scalar FP8 scales; research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}

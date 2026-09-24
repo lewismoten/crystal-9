@@ -645,3 +645,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-zlib-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-zlib.pt` (`52,443` bytes; SHA-256 `8950a00cdd10e0542f4f332c652c2ef1783c9ddc9dbdbb85bc926feeb82e6d93`; manifest integrity SHA-256 `a310e0b39359862b32e54ca453cf09ef2942e7ffa2470dbabd2680858f04626d`). Its 24,726 raw FP8 scale bytes compress losslessly to 18,011 bytes.
 - This reduces the prior exact scalar-FP8 artifact from 64,525 to 52,443 bytes but remains a scalar-scale hierarchy research artifact, not a claimed compact/deployable INT2 release: no release manifest or distribution gates exist.
 - Decision: **advance**. No training process is active. The next representation candidate must be independently parity-tested and may only make a further lossless transport/packing improvement or a distinct hierarchy change; it must preserve this accepted artifact and pass exhaustive runtime plus integrity gates.
+
+## Accepted packed scalar INT2 lossless FP8-scale LZMA transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma`
+
+- A distinct lossless transport candidate preserves the immutable scalar-FP8 INT2 codes and scale values but encodes its FP8 scale stream with LZMA instead of zlib. All accepted F32, INT4, INT3, scalar INT2, and zlib INT2 artifacts are unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_scale_lzma.py` failed for an absent module and passed after implementation; its integrity check was red with validation removed and green after restoration.
+- Exhaustive independent runtime gate passed with **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Immutable report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-preflight-20260924/report.json`.
+- Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma.pt` (`51,675` bytes; SHA-256 `7885932804257775709d90aa40972da15c6df57571f00ab29a122bc8ca267489`; manifest integrity SHA-256 `b71b4ee1c613ffe81dd2614458e36665e5f3a5a2e001893298c148c903ce843d`). The 24,726 raw FP8 scale bytes encode to 17,552 LZMA bytes.
+- This improves the exact zlib candidate by 768 bytes, but remains a scalar-scale hierarchy research artifact rather than a compact/deployable INT2 release; release manifest and distribution integrity gates remain absent.
+- Decision: **advance**. No training process is active. The next representation candidate must be independently parity-tested and either find a further lossless transport/packing improvement or define a separate hierarchy; it must preserve all accepted artifacts and pass exhaustive runtime plus integrity gates.
