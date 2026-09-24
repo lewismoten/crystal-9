@@ -166,13 +166,13 @@ def _render_attention_input_projections(rgb: bytearray, width: int, state: dict[
     group_x, group_y, group_width, group_height = x - 15, y, 210, 650
     _rectangle(rgb, width, group_x, group_y, group_width, group_height, _EXPERT_BORDER, 1)
     _centered_text(rgb, width, group_x + group_width // 2, group_y + 10, "Attention input", _LABEL)
-    _centered_text(rgb, width, group_x + group_width // 2, group_y + 32, "projections (Q / K / V)", _LABEL)
+    _centered_text(rgb, width, group_x + group_width // 2, group_y + 32, "projections", _LABEL)
     packed_weight = state["attention.in_proj_weight"]
     packed_bias = state["attention.in_proj_bias"]
-    for index, (symbol, meaning) in enumerate((("Q", "Query"), ("K", "Key"), ("V", "Value"))):
+    for index, meaning in enumerate(("Query", "Key", "Value")):
         label_y = group_y + 55 + index * 196
         grid_y = label_y + 27
-        _centered_text(rgb, width, x + 85, label_y, f"{symbol} — {meaning}", _LABEL)
+        _centered_text(rgb, width, x + 85, label_y, meaning, _LABEL)
         weight = packed_weight[index * 32 : (index + 1) * 32]
         bias = packed_bias[index * 32 : (index + 1) * 32]
         weight_width, _ = _render_tensor(rgb, width, weight, x, grid_y)
@@ -242,8 +242,9 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_vocabulary(rgb, width, 20, 170)
     _render_execution_contract(rgb, width, 20, 750)
 
-    # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
-    _arrow(rgb, width, 185, flow_y, 205, flow_y)
+    # Token and position embeddings are combined elementwise before attention.
+    _line(rgb, width, 190, flow_y, 205, flow_y)
+    _line(rgb, width, 198, flow_y - 8, 198, flow_y + 8)
     _arrow(rgb, width, 375, flow_y, 384, flow_y)
     _arrow(rgb, width, 600, flow_y, 625, flow_y)
     _arrow(rgb, width, 815, flow_y, 835, flow_y)
@@ -294,7 +295,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v22", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v23", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -306,15 +307,20 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v22",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v23",
         "legend_location": "top-right", "execution_contract_panel": {"location": "bottom-left", "bounds": [20, 750, 570, 470]},
         "attention_input_projection": {
-            "group_label": "Attention input projections (Q / K / V)", "packed_weight_shape": [96, 32],
+            "group_label": "Attention input projections", "packed_weight_shape": [96, 32],
             "segments": {
-                "Q": {"meaning": "Query", "weight_shape": [32, 32], "bias_shape": [32]},
-                "K": {"meaning": "Key", "weight_shape": [32, 32], "bias_shape": [32]},
-                "V": {"meaning": "Value", "weight_shape": [32, 32], "bias_shape": [32]},
+                "Query": {"weight_shape": [32, 32], "bias_shape": [32]},
+                "Key": {"weight_shape": [32, 32], "bias_shape": [32]},
+                "Value": {"weight_shape": [32, 32], "bias_shape": [32]},
             },
+        },
+        "embedding_combination": {
+            "operation": "elementwise addition",
+            "inputs": ["token embedding", "position embedding"],
+            "output": "attention input",
         },
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
