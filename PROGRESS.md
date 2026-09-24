@@ -110,3 +110,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Immutable report and checkpoint: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-qat-200-seed20260944-lr1e-4/report.json` and `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-qat-200-seed20260944-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias.pt`.
 - Next ordered work: preflight isolated INT3 routed-expert biases on this accepted predecessor. Do not create a packed INT3 artifact: input/attention/norm scopes remain F32 and lack independent runtime/integrity gates.
 
+## Accepted INT3 scope 5
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases`
+
+- Scope: accepted INT3 suffix and `output.bias`, plus `router.weight` in independent contiguous four-value INT3 groups per row, `router.bias` as per-tensor INT3, and both bias vectors in every routed expert as per-tensor INT3. Input, attention, and norm tensors remain F32; this is a staged scope, not a full-parameter INT3 model.
+- Source: accepted groupwise router-weight and router-bias checkpoint `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-qat-200-seed20260944-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias.pt`.
+- Direct materialization missed `7 / 294,778`; isolated QAT trained only `experts.*.0.bias` and `experts.*.2.bias` for 200 epochs, seed `20260945`, learning rate `0.0001`. SHA-256 assertions cover every frozen predecessor tensor.
+- Exact policy gate: **0 / 294,778** misses in fake-QAT and separately materialized evaluation.
+- Immutable report and checkpoint: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/report.json` (SHA-256 `a3ea618f8c967191a35167470b586645f88832b16c31cd2f090c4cf5f517b9b3`) and `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt` (SHA-256 `dc3e77ca17224775b24d61f616c351165ef90f31ee83809889ab45fc30ac06f1`).
+- Next ordered work: preflight isolated INT3 output bias and output weight together is not authorized because `output.bias` and `output.weight` are already accepted in the suffix. The next unresolved ordered component is the input embedding tables; retain the prior rejected rowwise candidate and establish a distinct parity-tested granularity strategy from this stronger predecessor. No packed INT3 artifact may be created while input, attention, and norm scopes remain F32 and independent runtime/integrity gates are absent.
+
