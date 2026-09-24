@@ -71,6 +71,10 @@ The exact comparison inputs and byte counts are in `validation/palace-9-comparis
 
 This is a decoded, non-reconstructable inspection of the full-parameter INT4 QAT checkpoint. It documents the tensor layout and QAT workflow; it is not a release label, model container, or substitute for either packed deployment artifact.
 
+## Netron inspection graph
+
+`inspection/crystal-9-f32-fixed8-inspection.onnx` is a derived F32 ONNX graph for [Netron](https://netron.app/). Keep its required `crystal-9-f32-fixed8-inspection.onnx.data` weight file beside it when transferring or opening it. The graph has one fixed `int64` input, `token_ids` with shape `[1, 8]`, and returns `logits` with shape `[1, 13]`. It exposes the attention, router/top-2 selection, all nine expert branches, routed merge, and output path that a packed artifact dictionary cannot show. It is inspection-only—not a Crystal-9 runtime or accepted deployment artifact. Its source binding and ONNX Runtime comparison are recorded in `inspection/crystal-9-f32-fixed8-inspection-validation.json`.
+
 ## Input and output contract
 
 Pass a raw history of board-square letters `a` through `i` in play order, with at most eight moves. The policy returns one square letter for a legal next move, or `!` when the history is invalid or terminal.

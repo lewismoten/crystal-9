@@ -1,0 +1,49 @@
+{
+  "role": "inspection-only derived ONNX graph; not a Crystal-9 runtime or accepted deployment artifact",
+  "source": {
+    "path": "artifacts-fp32.pt",
+    "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c"
+  },
+  "artifact": {
+    "path": "crystal-9-f32-fixed8-inspection.onnx",
+    "sha256": "296d71c305fa5f62925b65f5986b53377bf411d3af0188313c430be511bda246",
+    "bytes": 125072,
+    "required_companion": {
+      "path": "crystal-9-f32-fixed8-inspection.onnx.data",
+      "sha256": "a68d92a34366300ffdf42791a245c40139a06b01334b67d7f38845cd3c7eaf83",
+      "bytes": 96000
+    }
+  },
+  "input": {
+    "name": "token_ids",
+    "dtype": "int64",
+    "shape": [
+      1,
+      8
+    ]
+  },
+  "output": {
+    "name": "logits",
+    "shape": [
+      1,
+      13
+    ]
+  },
+  "onnx": {
+    "ir_version": 10,
+    "opset": [
+      18
+    ],
+    "nodes": 106,
+    "initializers": 72
+  },
+  "validation": {
+    "onnx_checker": "passed",
+    "onnxruntime": "CPUExecutionProvider",
+    "cases": 3,
+    "maximum_absolute_logit_error": 1.1444091796875e-05,
+    "logit_tolerance": 2e-05,
+    "argmax_match": true,
+    "passed": true
+  }
+}

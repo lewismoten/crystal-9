@@ -82,6 +82,15 @@
     "report": "validation/release-acceptance.json",
     "checksums": "SHA256SUMS"
   },
+  "inspection": {
+    "path": "inspection/crystal-9-f32-fixed8-inspection.onnx",
+    "required_companion": "inspection/crystal-9-f32-fixed8-inspection.onnx.data",
+    "role": "derived fixed-shape F32 graph for Netron inspection only; not a runtime or accepted deployment artifact",
+    "source_checkpoint": {"path": "artifacts/artifacts-fp32.pt", "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c"},
+    "input": {"name": "token_ids", "dtype": "int64", "shape": [1, 8]},
+    "output": {"name": "logits", "shape": [1, 13]},
+    "validation": "inspection/crystal-9-f32-fixed8-inspection-validation.json"
+  },
   "exclusions": {
     "full_fp16_model": "not created or accepted for Crystal-9",
     "browser_projection": "separate derivative representation; not needed for Python runtime",
