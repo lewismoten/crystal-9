@@ -572,3 +572,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization gate passed: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-direct-materialization/report.json`.
 - The staged representation has 24,694 FP32 scalar scales and is **not storage-efficient**; it is neither packed nor a full INT2 release.
 - Decision: **advance**. The next ordered candidate is scalar-group INT2 `norm.bias`. Its fresh fake-QAT/materialized parity test was red for absent methods and is now green; exhaustive direct materialization is next. No QAT is authorized unless that preflight is nonzero.
+
+## Accepted full scalar-group INT2 behavioral proof
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-norm-bias-group1-direct-materialization`
+
+- Immutable F32 source `artifacts-fp32.pt` (SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with scalar-group INT2 across every model parameter, including `norm.bias`. Zero tensors were trainable; no QAT ran.
+- TDD evidence: the norm-bias direct-preflight test failed for its absent runner API, then passed after minimal implementation; its independently created fake-QAT/materialized parity test passes.
+- Exhaustive direct-materialization gate passed: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-norm-bias-group1-direct-materialization/report.json`.
+- This first behaviorally exact full-parameter INT2 proof has 24,726 FP32 scalar scales. It is **not storage-efficient**, packed, or a deployable INT2 release.
+- Decision: **change strategy**. Behavioral feasibility is proven. Any scale compression or packed-runtime work must be a distinct hierarchy-quantization candidate with its own red-to-green parity, packing, runtime, and integrity gates; this accepted proof remains immutable.
