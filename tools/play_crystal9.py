@@ -40,7 +40,7 @@ def main() -> None:
             move = input("Your move (a-i): ").strip().lower()
             if len(move) == 1 and move in SQUARES and move not in history:
                 break
-            print("Choose an empty square from a through i.")
+            print("invalid move")
         history += move
         if status(history):
             break
