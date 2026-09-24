@@ -60,3 +60,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 | 200 epochs, lower rate | 1 |
 | 200 epochs, higher rate | 6 |
 
+## Rejected INT3 router-bias trials
+
+`mixed-int3-suffix-output-bias-router-bias`
+
+- Scope: accepted INT3 suffix plus `output.bias`, with `router.bias` added as per-tensor INT3. All other tensors were frozen and recorded by SHA-256 in the per-run provenance.
+- Direct materialization baseline: `6 / 294,778` misses in both fake-QAT and materialized evaluation.
+- Isolated 200-epoch QAT, learning rate `0.0001`: seeds `20260938`, `20260939`, and `20260940` each reached `1 / 294,778` misses in both paths; seed `20260941` regressed to `10 / 294,778`.
+- Every candidate is rejected: parity matched, but no candidate achieved the required `0 / 294,778`. Preserve these artifacts as evidence; do not export them as accepted INT3 model state or keep repeating the same recipe.
+- Next work must be a separately preflighted strategy change or controlled continuation from a one-miss candidate, with exactly one changed variable.
+
