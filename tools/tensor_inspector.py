@@ -176,7 +176,7 @@ def _render_vocabulary(rgb: bytearray, width: int, x: int, y: int) -> None:
 def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]:
     """Create a derived, architecture-flow map; it is not a byte transport artifact."""
     state = _checkpoint_state(source)
-    width, height = 2050, 1390
+    width, height = 2050, 1240
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -229,16 +229,16 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
     # Lower-left legend keeps the border semantics visible without competing with the column headers.
-    legend_x, weights_y, bias_y = 20, 1280, 1330
+    legend_x, weights_y, bias_y = 20, 1153, 1193
     _rectangle(rgb, width, legend_x, weights_y, 30, 30, _WEIGHT_BORDER, 2)
     _text(rgb, width, legend_x + 46, weights_y + 5, "Weights", _LABEL)
     _rectangle(rgb, width, legend_x, bias_y, 30, 30, _BIAS_BORDER, 2)
     _text(rgb, width, legend_x + 46, bias_y + 5, "Bias", _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v15", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v16", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v15",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v16",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
