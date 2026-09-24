@@ -1,0 +1,18 @@
+{
+  "layout": "mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-norm-weight-group1",
+  "source_checkpoint": "artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt",
+  "trainable_tensors": [],
+  "strategy": "accepted-direct-materialization",
+  "quantization": {
+    "bits": 3,
+    "group_size": 1,
+    "scale_count": 32,
+    "scale_type": "FP32",
+    "storage_efficiency": "scalar-group staged representation; not packed low-bit release"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 0,
+    "materialized_policy_misses": 0
+  }
+}

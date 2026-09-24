@@ -364,3 +364,28 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Accepted staged scope is now scope 12: experts/output/router, scalar-group token and position tables, attention Q rowwise, K/V group-2, scalar-group attention output projection and both attention biases. Norm tensors remain F32.
 - Decision: **advance**. The next ordered unresolved component is `norm.weight`, requiring a new parity-tested direct-materialization preflight. No packed INT3 artifact may be created until every declared tensor is accepted and independent packing/runtime/integrity gates exist.
 
+## Accepted INT3 scope 13
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-norm-weight-group1`
+
+- Scope: accepted scope 12 plus `norm.weight` in independent scalar INT3 groups; `norm.bias` remains F32.
+- The parity test passed: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py::test_int3_qk_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1_fake_qat_matches_materialized_runtime`.
+- No QAT ran. Exhaustive direct materialization from the immutable accepted Q/K/V checkpoint passed with matching **0 / 294,778** fake-QAT and materialized-policy misses; zero tensors were trainable.
+- Immutable report: `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-norm-weight-group1-direct-materialization/report.json`.
+- `norm.weight` uses 32 FP32 scales (one per scalar), so this is a policy-preserving staged representation, not a storage-efficient packed INT3 artifact.
+
+## Accepted INT3 scope 14
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-norm-weight-group1-norm-bias-group1`
+
+- Scope: accepted scope 13 plus `norm.bias` in independent scalar INT3 groups. All model parameters are now quantized under the explicitly recorded mixed layouts.
+- The norm-bias parity test was observed red for absent methods, then green after minimal implementation: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py::test_int3_qk_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1_norm_bias_group1_fake_qat_matches_materialized_runtime`.
+- No QAT ran. Exhaustive direct materialization from the immutable accepted Q/K/V checkpoint passed with matching **0 / 294,778** fake-QAT and materialized-policy misses; zero tensors were trainable.
+- Immutable report: `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-norm-weight-group1-norm-bias-group1-direct-materialization/report.json`.
+- The two norm tensors use 64 FP32 scales in total (one per scalar). This is a complete policy-quantized staged representation, **not** a packed INT3 deployment artifact: independent packing, runtime, and integrity gates remain unimplemented.
+
+## INT3 stage status
+
+- Accepted scope 14 covers every model parameter: expert matrices/biases, output tensors, router weight/bias, scalar-group embedding/position tables, attention Q/K/V/output/bias tensors, and scalar-group norm weight/bias.
+- Decision: **change strategy** from staged QAT to representation work. No training process is active because all ordered parameter groups passed their exact direct/QAT gates. The next authorized work is parity-tested packed INT3 runtime/integrity design; no packed release exists or is claimed.
+
