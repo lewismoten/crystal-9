@@ -593,3 +593,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp16-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp16-scales.pt` (`87,657` bytes; SHA-256 `916f9b8ff9ee2d6a02c920987df1e21f82a4ce01dc64c9d83c914bf9ea5f8f1a`; manifest integrity SHA-256 `f4619917528d92faf7393a564728be9e70dcc56cece9cea1a37b59e28c0524ec`).
 - This is a parity-validated hierarchy-quantization research candidate, not a claimed compact or deployable INT2 release: it retains one scale per scalar and has no release-manifest or distribution integrity gate.
 - Decision: **advance**. The next bounded representation candidate is a separately parity-tested lower-precision scale encoding; it must preserve this artifact and pass its own exhaustive packed-runtime and integrity gates.
+
+## Accepted packed scalar INT2 FP8-scale candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales`
+
+- The immutable full scalar-group INT2 proof was independently exported as genuine low-bit-first packed INT2 codes with all 24,726 scalar dequantization scales stored as `float8_e4m3fn`. The F32 source, accepted INT4/INT3 artifacts, FP32-scale INT2 proof, and FP16-scale candidate remain unchanged.
+- TDD evidence: the FP8-scale runtime test was red because the original integrity serializer could not encode Float8 scales; it passed after byte-level digest serialization and Float32 decode promotion were added. A packed-runtime evaluator test was red for its absent API and then green. Full suite: **151 passed**.
+- Independent packed runtime exhaustive gate passed: **0 / 294,778** legal-policy misses. Immutable report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-preflight-20260924/report.json`.
+- Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt` (`64,525` bytes; SHA-256 `0908e9953a434f0ab5d78df8f6dbc8d4c5eb1c24db7e9e013bd7bb5105768235`; manifest integrity SHA-256 `d438aca4987c0b2efd6b71e6776c42d919e4a8fd1caaa5a545490860aedd9d26`).
+- This is a parity-validated hierarchy-quantization research candidate, not a compact or deployable INT2 release: it still retains one scale per scalar and has no release-manifest or distribution integrity gate.
+- Decision: **change strategy**. Lower scalar-scale precision is now exhausted for this FP8 type; any further compression must be a distinct parity-tested shared/hierarchical scale-layout candidate. No training process is active.

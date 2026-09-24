@@ -45,7 +45,7 @@ def _encode(values: torch.Tensor, scale_dtype: torch.dtype = torch.float32) -> d
 
 def _decode(record: dict, device: torch.device) -> torch.Tensor:
     codes = unpack_signed_int2(record["packed"], record["count"]).to(device).float()
-    return (codes / LEVELS * record["scales"].to(device)).reshape(record["shape"])
+    return (codes / LEVELS * record["scales"].to(device).float()).reshape(record["shape"])
 
 
 def _integrity_digest(manifest: dict) -> str:
@@ -57,7 +57,7 @@ def _integrity_digest(manifest: dict) -> str:
     for name in sorted(manifest["tensors"]):
         record = manifest["tensors"][name]
         digest.update(json.dumps({"name": name, "shape": record["shape"], "count": record["count"]}, sort_keys=True, separators=(",", ":")).encode())
-        digest.update(record["scales"].contiguous().numpy().tobytes())
+        digest.update(record["scales"].contiguous().view(torch.uint8).numpy().tobytes())
         digest.update(record["packed"].contiguous().numpy().tobytes())
     return digest.hexdigest()
 
@@ -127,3 +127,18 @@ class PackedInt2Policy:
             experts.append(F.linear(value, t(f"experts.{index}.2.weight"), t(f"experts.{index}.2.bias")))
         routed = torch.stack(experts, dim=1).gather(1, top_indices.unsqueeze(-1).expand(-1, -1, width))
         return F.linear(state + (routed * top_weights.unsqueeze(-1)).sum(dim=1), t("output.weight"), t("output.bias"))
+
+
+def evaluate_packed(runtime, tokenizer, device: torch.device, histories: list[str], expected_move) -> dict[str, int]:
+    """Exhaustively score a packed runtime against the authoritative policy."""
+    misses = 0
+    with torch.no_grad():
+        for start in range(0, len(histories), 4096):
+            batch = histories[start:start + 4096]
+            inputs = torch.tensor(
+                [tokenizer.encode_history(history) + [0] * (9 - len(tokenizer.encode_history(history))) for history in batch],
+                device=device,
+            )
+            predicted = runtime(inputs).argmax(dim=-1).tolist()
+            misses += sum(tokenizer.decode_id(token) != expected_move(history) for token, history in zip(predicted, batch))
+    return {"legal_histories": len(histories), "policy_misses": misses}

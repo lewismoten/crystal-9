@@ -20,3 +20,21 @@ def test_packed_int2_fp16_scales_match_fp16_scalar_materialization(tmp_path):
 
     torch.testing.assert_close(runtime(token_ids), expected(token_ids))
     assert manifest["scale_type"] == "float16"
+
+
+def test_packed_int2_fp8_scales_match_fp8_scalar_materialization(tmp_path):
+    torch.manual_seed(20260979)
+    source = TinyMoEPolicy(vocab_size=13).eval()
+    expected = TinyMoEPolicy(vocab_size=13).eval()
+    expected.load_state_dict(source.state_dict())
+    with torch.no_grad():
+        for parameter in expected.parameters():
+            parameter.copy_(parameter.sign() * parameter.abs().to(torch.float8_e4m3fn).float())
+    artifact_path = tmp_path / "crystal-9-int2-fp8-scales.pt"
+
+    manifest = export_packed_int2(source, artifact_path, scale_dtype=torch.float8_e4m3fn)
+    runtime = PackedInt2Policy.load(artifact_path).eval()
+    token_ids = torch.tensor([[1, 2, 3, 0], [1, 4, 5, 6]])
+
+    torch.testing.assert_close(runtime(token_ids), expected(token_ids))
+    assert manifest["scale_type"] == "float8_e4m3fn"
