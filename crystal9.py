@@ -422,6 +422,10 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_row_groups_ste(self.output.weight, 2, 1), quantize_groups_ste(self.output.bias, 2, 1))
 
+    def forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar INT2 Q/K scope; scalar K quantization is value-preserving."""
+        return self.forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1(token_ids)
+
     def forward_mixed_int3_suffix_output_bias(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Second INT3 tracer: accepted suffix plus INT3 final-output bias."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -1298,6 +1302,15 @@ def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_b
     width = materialized.attention.embed_dim
     with torch.no_grad():
         materialized.attention.in_proj_weight[:width].copy_(quantize_row_groups(materialized.attention.in_proj_weight[:width], 2, 1))
+    return materialized
+
+
+def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar INT2 scope through input tables plus scalar-group Q/K."""
+    materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[width:2 * width].copy_(quantize_row_groups(materialized.attention.in_proj_weight[width:2 * width], 2, 1))
     return materialized
 
 

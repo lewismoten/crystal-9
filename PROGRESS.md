@@ -512,3 +512,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization gate: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-direct-materialization/report.json`.
 - The staged representation has 21,462 FP32 scalar scales and is not storage-efficient; it is neither packed nor a full INT2 release.
 - Decision: **advance**. The next ordered candidate is scalar-group INT2 K rows (`attention.in_proj_weight[32:64]`), with a fresh red-to-green parity test and exhaustive direct-materialization gate before any QAT.
+
+## Accepted INT2 scalar-Q/K direct-materialization preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-direct-materialization`
+
+- Strategy change from the rejected rowwise-Q scope: the immutable F32 source (`artifacts-fp32.pt`, SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) now has both Q (`attention.in_proj_weight[:32]`) and K (`attention.in_proj_weight[32:64]`) rows represented as independent scalar INT2 groups. No tensors were trainable and no QAT ran.
+- TDD evidence: the K parity test passes, and the direct-preflight runner test was observed red for its absent runner then green after its minimal implementation.
+- Exhaustive direct-materialization gate: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-direct-materialization/report.json`.
+- The staged representation has 22,486 FP32 scalar scales and is not storage-efficient; it is neither packed nor a full INT2 release.
+- Decision: **advance**. The next ordered candidate is scalar-group INT2 V rows (`attention.in_proj_weight[64:96]`), requiring its own fresh red-to-green parity test and exhaustive direct-materialization gate before any QAT.
