@@ -463,3 +463,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The representation has 19,158 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
 - Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 expert biases (`experts.*.0.bias`, `experts.*.2.bias`) from this accepted scope, with a distinct parity test and exhaustive gate before any QAT.
 
+## Accepted INT2 scalar suffix through expert-bias preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-direct-materialization`
+
+- Immutable F32 source (`artifacts-fp32.pt`, SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with scalar-group INT2 on `experts.*.0.weight`, `experts.*.2.weight`, `output.weight`, `output.bias`, `router.weight`, `router.bias`, `experts.*.0.bias`, and `experts.*.2.bias`; zero tensors were trainable and no QAT ran.
+- TDD evidence: the direct-preflight runner test failed for its absent API, then passed after minimal implementation; the preceding independent fake-QAT/materialized parity test passes. Full suite: **123 passed**.
+- Exhaustive direct-materialization gate passed: **0 / 294,778** legal-policy misses in fake-QAT and independently materialized runtime. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-direct-materialization-20260924/report.json`.
+- The representation has 19,734 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
+- Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 `position.weight` from this accepted scope, with a distinct parity test and exhaustive gate before any QAT; `embedding.weight`, attention, and norm tensors remain F32.
+
