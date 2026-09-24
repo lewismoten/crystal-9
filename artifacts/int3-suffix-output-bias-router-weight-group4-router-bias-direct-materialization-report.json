@@ -1,0 +1,11 @@
+{
+  "layout": "mixed-int3-suffix-output-bias-router-weight-group4-router-bias",
+  "source_checkpoint": "artifacts/int3-suffix-output-bias-router-weight-group4-qat-200-seed20260943-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4.pt",
+  "trainable_tensors": [],
+  "decision": "qat-required",
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 1,
+    "materialized_policy_misses": 1
+  }
+}
