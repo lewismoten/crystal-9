@@ -131,3 +131,19 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization preflight: `2,985 / 294,778` misses in fake-QAT and `2,985 / 294,778` materialized (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group4-direct-materialization-report.json`). QAT is required.
 - Active recipe: isolated 200-epoch QAT, seed `20260946`, learning rate `0.0001`, batch size `1024`; only the two named input tables are trainable. Acceptance remains exactly `0 / 294,778` in both paths.
 
+## Rejected INT3 groupwise-input candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group4`
+
+- Direct materialization missed `2,985 / 294,778`; isolated 200-epoch QAT trained only `embedding.weight` and `position.weight` at seed `20260946`, learning rate `0.0001`, reducing matching fake-QAT/materialized misses to `835 / 294,778`.
+- This is a material improvement but not near the exact gate. The immutable checkpoint and report remain rejected evidence; it will not be extended or exported.
+
+## Active INT3 two-value-groupwise-input candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group2`
+
+- Scope: accepted INT3 scope 5 plus `embedding.weight` and `position.weight` as independent contiguous two-value INT3 groups per row. This changes only the input-table quantization granularity from the rejected group4 candidate.
+- Source: accepted scope-5 checkpoint `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt`; all predecessor tensors except the two named input tables are SHA-256 asserted frozen.
+- The new fake-QAT/materialization parity test was red before implementation and passes. Exhaustive direct materialization missed `862 / 294,778` in both paths (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group2-direct-materialization-report.json`), so isolated QAT is required.
+- Active recipe: 200 epochs, seed `20260947`, learning rate `0.0001`, batch size `1024`; only the two input tables are trainable. Acceptance remains exactly `0 / 294,778` in both paths.
+
