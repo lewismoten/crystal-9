@@ -1769,6 +1769,61 @@ def run_mixed_int3_attention_q_k_group2_v_group4_qat(
     return report
 
 
+def run_mixed_int3_attention_q_k_group2_v_group2_qat(
+    epochs: int = 200,
+    batch_size: int = 1024,
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+    seed: int = 20260954,
+    learning_rate: float = 0.0001,
+) -> dict:
+    """Train only V rows for scalar-input INT3 Q/K/V group-2 layout."""
+    from crystal9 import materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2
+
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts/int3-scalar-input-attention-q-k-group2-qat-200-seed20260952-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    inputs = torch.tensor([padded(tokenizer, history) for history in histories], device=device)
+    labels = torch.tensor([tokenizer.tokens.index(optimal_move(history)) for history in histories], device=device)
+    torch.manual_seed(seed)
+    model = load_reference_model(source, tokenizer.vocab_size, device)
+    original = {name: value.detach().cpu().clone() for name, value in model.state_dict().items()}
+    for parameter in model.parameters(): parameter.requires_grad_(False)
+    model.attention.in_proj_weight.requires_grad_(True)
+    width = model.attention.embed_dim
+    frozen_tensor_sha256 = {name: hashlib.sha256(value.numpy().tobytes()).hexdigest() for name, value in original.items() if name != "attention.in_proj_weight"}
+    frozen_tensor_sha256["attention.in_proj_weight[Q/K]"] = hashlib.sha256(original["attention.in_proj_weight"][: 2 * width].numpy().tobytes()).hexdigest()
+    optimizer = torch.optim.AdamW((model.attention.in_proj_weight,), lr=learning_rate, weight_decay=0)
+    for _ in range(epochs):
+        model.train(); order = torch.randperm(len(histories), device=device)
+        for start, end in batch_ranges(len(histories), batch_size):
+            index = order[start:end]; optimizer.zero_grad()
+            loss = nn.functional.cross_entropy(model.forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2(inputs[index]), labels[index])
+            loss.backward(); model.attention.in_proj_weight.grad[: 2 * width].zero_(); optimizer.step()
+    assert torch.equal(original["attention.in_proj_weight"][: 2 * width], model.attention.in_proj_weight.detach().cpu()[: 2 * width])
+    assert all(torch.equal(original[name], value.detach().cpu()) for name, value in model.state_dict().items() if name != "attention.in_proj_weight")
+    layout = "mixed-int3-scalar-input-attention-q-k-group2-v-group2"
+    quantization = {"V": {"bits": 3, "group_size": 2, "scale_type": "float32", "scale_count": width * (width // 2), "storage_efficient": False}}
+    checkpoint_path = output / f"artifacts-qat-{layout}.pt"
+    torch.save({"state_dict": model.cpu().state_dict(), "layout": layout, "source_checkpoint": str(source), "trainable_tensors": ["attention.in_proj_weight[V]"], "frozen_tensor_sha256": frozen_tensor_sha256, "seed": seed, "learning_rate": learning_rate, "epochs": epochs, "quantization": quantization}, checkpoint_path)
+    model = model.to(device).eval(); materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(model).eval()
+    fake_misses = materialized_misses = 0
+    with torch.no_grad():
+        for start in range(0, len(histories), 4096):
+            batch = histories[start:start + 4096]; batch_inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
+            fake = model.forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2(batch_inputs).argmax(dim=-1).tolist(); actual = materialized(batch_inputs).argmax(dim=-1).tolist()
+            fake_misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(fake, batch)); materialized_misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(actual, batch))
+    report = {"layout": layout, "source_checkpoint": str(source), "trainable_tensors": ["attention.in_proj_weight[V]"], "frozen_tensor_sha256": frozen_tensor_sha256, "seed": seed, "learning_rate": learning_rate, "epochs": epochs, "quantization": quantization, "acceptance": {"legal_histories": len(histories), "fake_qat_policy_misses": fake_misses, "materialized_policy_misses": materialized_misses}}
+    (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
 def run(epochs: int = 400, batch_size: int = 1024) -> dict:
     root = Path(__file__).parent
     tokenizer = GameTokenizer.from_design_file(root / "design.json")

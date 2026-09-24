@@ -1,0 +1,19 @@
+{
+  "layout": "mixed-int3-scalar-input-attention-q-k-group2-v-group2",
+  "source_checkpoint": "artifacts/int3-scalar-input-attention-q-k-group2-qat-200-seed20260952-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2.pt",
+  "trainable_tensors": [],
+  "quantization": {
+    "V": {
+      "bits": 3,
+      "group_size": 2,
+      "scale_type": "float32",
+      "scale_count": 512,
+      "storage_efficient": false
+    }
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 10,
+    "materialized_policy_misses": 10
+  }
+}
