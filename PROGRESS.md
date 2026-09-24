@@ -308,5 +308,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The new fake-QAT/materialized parity test was observed red before implementation and is green: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py`. The isolated-runner test asserts every tensor other than `attention.out_proj.weight` retains exact identity.
 - Exhaustive direct materialization from accepted scope 9 produced matching `145 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group4-direct-materialization/report.json`), so QAT is required. This layout has 256 FP32 scales and is a staged representation, not a packed INT3 release.
 - Initial isolated QAT: 200 epochs, seed `20260956`, learning rate `0.0001`, batch size `1024`, trained only `attention.out_proj.weight` with zero optimizer weight decay and SHA-256 assertions for every frozen predecessor tensor. It reduced matching fake-QAT/materialized misses from `145` to `7 / 294,778`; this is immutable evidence, not acceptance.
-- Decision: **continue** once from that best checkpoint, changing only learning rate to `0.00005` for 100 epochs; same seed `20260956`, batch size `1024`, source checkpoint, trainable tensor, and frozen-tensor SHA-256 assertions. Active artifact directory: `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group4-qat-continue-100-seed20260956-lr5e-5/`. Any nonzero total rejects the group-4 recipe rather than extending it again.
+- Decision: **change strategy**. The one allowed group-4 continuation regressed from matching `7` to `12 / 294,778` misses, so both group-4 QAT artifacts are immutable rejected evidence; do not extend them again.
+
+## Active INT3 attention output-projection two-value-group candidate
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group2`
+
+- Strategy change: only `attention.out_proj.weight` granularity changes from rejected group-4 to independent contiguous two-value INT3 groups. Accepted Q/K/V and every other predecessor tensor remain frozen.
+- The parity test was observed red for the absent group-2 output layout, then green after minimal implementation: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py`. The isolated runner test asserts every tensor other than `attention.out_proj.weight` retains exact identity.
+- Exhaustive direct materialization from accepted scope 9 produced matching `32 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group2-direct-materialization/report.json`), so QAT is required. This layout has 512 FP32 scales and is a staged representation, not a packed INT3 release.
+- Active recipe: isolated 200 epochs, seed `20260957`, learning rate `0.0001`, batch size `1024`; only `attention.out_proj.weight` is trainable, with zero optimizer weight decay and SHA-256 assertions for every frozen predecessor tensor. Acceptance remains matching exactly `0 / 294,778` misses in both paths.
 

@@ -126,3 +126,20 @@ def test_int3_qk_group2_v_group2_out_group4_qat_changes_only_attention_output_pr
     assert all(torch.equal(original[name], saved[name]) for name in original if name != "attention.out_proj.weight")
     assert report["trainable_tensors"] == ["attention.out_proj.weight"]
     assert report["quantization"]["attention.out_proj.weight"]["group_size"] == 4
+
+
+def test_int3_qk_group2_v_group2_out_group2_qat_changes_only_attention_output_projection(tmp_path, monkeypatch):
+    import training
+
+    tokenizer = GameTokenizer.from_design_file("design.json")
+    source_path = tmp_path / "source.pt"
+    torch.save({"state_dict": TinyMoEPolicy(tokenizer.vocab_size).state_dict()}, source_path)
+    monkeypatch.setattr("training.legal_histories", lambda: ["", "a", "ab"])
+
+    report = training.run_mixed_int3_attention_q_k_group2_v_group2_out_group2_qat(epochs=1, batch_size=2, source_path=source_path, output_dir=tmp_path / "run", device=torch.device("cpu"))
+
+    saved = torch.load(tmp_path / "run" / "artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group2.pt", weights_only=False)["state_dict"]
+    original = torch.load(source_path, weights_only=False)["state_dict"]
+    assert all(torch.equal(original[name], saved[name]) for name in original if name != "attention.out_proj.weight")
+    assert report["trainable_tensors"] == ["attention.out_proj.weight"]
+    assert report["quantization"]["attention.out_proj.weight"]["group_size"] == 2
