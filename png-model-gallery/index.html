@@ -29,7 +29,7 @@
   <main>
     <h1>Crystal-9 as lossless PNG byte payloads</h1>
     <p class="lede">Each image is the exact bytes of one checkpoint or deployment artifact packed into RGB channels. The PNGs are truecolor RGB and contain no alpha channel. These colors are transport data, not a visualization of learned weights.</p>
-    <p class="note">Every card below is <strong>round-trip verified</strong>: the exported PNG was decoded by the Crystal-9 PNG decoder and checked against the source SHA-256. This page only displays the transport images; it does not yet execute model inference from canvas bytes.</p>
+    <p class="note">Every card below is <strong>round-trip verified</strong>: the exported PNG was decoded by the Crystal-9 PNG decoder and checked against the source SHA-256. This page displays the transport images. <a href="runtime/">Run the accepted packed INT4 tensors from their PNG transport in the browser.</a></p>
     <section id="models" aria-live="polite">Loading manifest…</section>
     <h2 class="section-title">Derived tensor inspectors</h2>
     <p class="inspector-note">These are not transport images and cannot reconstruct a checkpoint. Each cell is an actual loaded tensor value, arranged by tensor and normalized independently to its own maximum absolute value. Lime is positive, blue is negative, and dark cells are near zero.</p>
