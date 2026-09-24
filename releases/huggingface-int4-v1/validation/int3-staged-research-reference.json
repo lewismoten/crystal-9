@@ -1,0 +1,18 @@
+{
+  "layout": "mixed-int3-suffix-output-bias",
+  "source_checkpoint": "artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt",
+  "quantized_scope": [
+    "experts.*.0.weight",
+    "experts.*.2.weight",
+    "output.weight",
+    "output.bias"
+  ],
+  "quantization": "INT3; rowwise matrices, per-tensor output bias",
+  "trainable_tensors": [],
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 0,
+    "materialized_policy_misses": 0
+  },
+  "status": "accepted-direct-materialization"
+}
