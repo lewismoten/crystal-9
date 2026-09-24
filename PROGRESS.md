@@ -562,3 +562,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization gate passed: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-direct-materialization/report.json`.
 - The staged representation has 24,662 FP32 scalar scales and is not storage-efficient; it is neither packed nor a full INT2 release.
 - Decision: **advance**. The next ordered candidate is scalar-group INT2 `norm.weight`; its parity test has completed red-to-green and its exhaustive direct-materialization preflight is next. No QAT is authorized unless that preflight is nonzero.
+
+## Accepted INT2 scalar norm-weight preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-direct-materialization`
+
+- Immutable F32 source `artifacts-fp32.pt` (SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with the accepted scalar scope plus scalar INT2 `norm.weight`. Zero tensors were trainable and no QAT ran.
+- TDD evidence: the norm-weight direct-preflight test failed for its absent runner API, then passed after minimal implementation; the existing fake-QAT/materialized parity test passes.
+- Exhaustive direct-materialization gate passed: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-direct-materialization/report.json`.
+- The staged representation has 24,694 FP32 scalar scales and is **not storage-efficient**; it is neither packed nor a full INT2 release.
+- Decision: **advance**. The next ordered candidate is scalar-group INT2 `norm.bias`. Its fresh fake-QAT/materialized parity test was red for absent methods and is now green; exhaustive direct materialization is next. No QAT is authorized unless that preflight is nonzero.
