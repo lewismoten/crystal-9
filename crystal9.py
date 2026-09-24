@@ -399,6 +399,29 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_row_groups_ste(self.output.weight, 2, 1), quantize_groups_ste(self.output.bias, 2, 1))
 
+    def forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar INT2 scope through input tables plus scalar-group Q projection."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 2, 1), padding_idx=self.embedding.padding_idx) + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 2, 1))
+        batch, steps, width = hidden.shape; heads = self.attention.num_heads; head_width = width // heads
+        projection_weight = self.attention.in_proj_weight.clone()
+        projection_weight[:width] = quantize_row_groups_ste(projection_weight[:width], 2, 1)
+        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
+        scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
+        causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
+        scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
+        attended = torch.softmax(scores, dim=-1) @ value
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), self.attention.out_proj.weight, self.attention.out_proj.bias)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 2, 1), quantize_groups_ste(self.router.bias, 2, 1)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert; value = F.linear(state, quantize_row_groups_ste(first.weight, 2, 1), quantize_groups_ste(first.bias, 2, 1)); expert_outputs.append(F.linear(F.silu(value), quantize_row_groups_ste(second.weight, 2, 1), quantize_groups_ste(second.bias, 2, 1)))
+        all_experts = torch.stack(expert_outputs, dim=1); routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_row_groups_ste(self.output.weight, 2, 1), quantize_groups_ste(self.output.bias, 2, 1))
+
     def forward_mixed_int3_suffix_output_bias(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Second INT3 tracer: accepted suffix plus INT3 final-output bias."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -1266,6 +1289,15 @@ def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_b
     width = materialized.attention.embed_dim
     with torch.no_grad():
         materialized.attention.in_proj_weight[:width].copy_(quantize_rows(materialized.attention.in_proj_weight[:width], 2))
+    return materialized
+
+
+def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar INT2 scope through input tables plus scalar-group Q."""
+    materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding(source)
+    width = materialized.attention.embed_dim
+    with torch.no_grad():
+        materialized.attention.in_proj_weight[:width].copy_(quantize_row_groups(materialized.attention.in_proj_weight[:width], 2, 1))
     return materialized
 
 
