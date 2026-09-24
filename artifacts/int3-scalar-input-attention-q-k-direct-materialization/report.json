@@ -1,0 +1,15 @@
+{
+  "layout": "mixed-int3-scalar-input-attention-q-k",
+  "source_checkpoint": "artifacts/int3-scalar-input-attention-q-qat-continue-100-seed20260949-lr5e-5/artifacts-qat-mixed-int3-scalar-input-attention-q.pt",
+  "trainable_tensors": [],
+  "acceptance": {
+    "fake_qat": {
+      "legal_histories": 294778,
+      "policy_misses": 2396
+    },
+    "materialized": {
+      "legal_histories": 294778,
+      "policy_misses": 2396
+    }
+  }
+}

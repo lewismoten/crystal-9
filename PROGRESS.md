@@ -214,3 +214,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Accepted staged scope is now scope 8: experts, output, router, scalar-group token and position tables, and attention Q rows are INT3 under their recorded layouts. Attention K/V/output, attention biases, and norm tensors remain F32.
 - No training process is active: the controlled Q continuation reached the exact gate. The next unresolved component is attention K, which needs a new parity-tested direct-materialization preflight.
 
+## Active INT3 attention K candidate
+
+`mixed-int3-scalar-input-attention-q-k`
+
+- Scope: accepted INT3 scope 8 plus only the K rows (`attention.in_proj_weight[32:64]`) in rowwise INT3. Q rows remain at their accepted INT3 state; V rows, attention output projection, attention biases, and norm tensors remain F32.
+- The Q+K fake-QAT/materialized parity test was red before implementation and now passes: `tests/test_mixed_int3_attention_q_k_parity.py`.
+- Exhaustive direct materialization from the accepted Q checkpoint produced matching `2,396 / 294,778` fake-QAT/materialized misses. QAT is therefore required.
+- Active recipe: isolated K-only QAT for 200 epochs, seed `20260950`, learning rate `0.0001`, batch size `1024`. Q/V rows and every other tensor are asserted frozen; acceptance remains exactly `0 / 294,778` in both paths.
+
