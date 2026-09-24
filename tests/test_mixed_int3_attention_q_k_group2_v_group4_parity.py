@@ -24,3 +24,14 @@ def test_mixed_int3_scalar_input_attention_q_k_group2_v_group2_fake_qat_matches_
     actual = crystal9.materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)(token_ids)
 
     torch.testing.assert_close(actual, expected, rtol=0, atol=1e-6)
+
+
+def test_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_fake_qat_matches_materialized():
+    tokenizer = crystal9.GameTokenizer.from_design_file("design.json")
+    source = crystal9.TinyMoEPolicy(tokenizer.vocab_size).eval()
+    token_ids = torch.tensor([[1, 4, 7, 0], [1, 3, 8, 11]])
+
+    expected = source.forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids)
+    actual = crystal9.materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(source)(token_ids)
+
+    torch.testing.assert_close(actual, expected, rtol=0, atol=1e-6)
