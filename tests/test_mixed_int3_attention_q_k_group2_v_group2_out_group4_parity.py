@@ -57,3 +57,14 @@ def test_int3_qk_group2_v_group2_out_group1_input_bias_group1_output_bias_group1
     actual = crystal9.materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1(source)(token_ids)
 
     torch.testing.assert_close(actual, expected, rtol=0, atol=1e-6)
+
+
+def test_int3_qk_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1_fake_qat_matches_materialized_runtime():
+    tokenizer = GameTokenizer.from_design_file("design.json")
+    source = crystal9.TinyMoEPolicy(tokenizer.vocab_size).eval()
+    token_ids = torch.tensor([[1, 4, 7, 0], [1, 3, 8, 11]])
+
+    expected = source.forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(token_ids)
+    actual = crystal9.materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(source)(token_ids)
+
+    torch.testing.assert_close(actual, expected, rtol=0, atol=1e-6)

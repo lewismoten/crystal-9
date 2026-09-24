@@ -645,7 +645,11 @@ class TinyMoEPolicy(nn.Module):
         """Accepted scalar-group attention layout plus scalar-group output bias."""
         return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1, 1)
 
-    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int, input_bias_group_size: int | None = None, output_bias_group_size: int | None = None) -> torch.Tensor:
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group attention layout plus scalar-group norm weight."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1, 1, 1)
+
+    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int, input_bias_group_size: int | None = None, output_bias_group_size: int | None = None, norm_weight_group_size: int | None = None) -> torch.Tensor:
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
         hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
         hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
@@ -663,7 +667,8 @@ class TinyMoEPolicy(nn.Module):
         attended = torch.softmax(scores, dim=-1) @ value
         output_bias = quantize_groups_ste(self.attention.out_proj.bias, 3, output_bias_group_size) if output_bias_group_size else self.attention.out_proj.bias
         attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_row_groups_ste(self.attention.out_proj.weight, 3, output_group_size), output_bias)
-        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
+        norm_weight = quantize_groups_ste(self.norm.weight, 3, norm_weight_group_size) if norm_weight_group_size else self.norm.weight
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = F.layer_norm(attended[torch.arange(batch, device=token_ids.device), last], self.norm.normalized_shape, norm_weight, self.norm.bias, self.norm.eps)
         router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
         top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
         for expert in self.experts:
@@ -1121,6 +1126,14 @@ def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1
     materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(source)
     with torch.no_grad():
         materialized.attention.out_proj.bias.copy_(quantize_groups(materialized.attention.out_proj.bias, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_norm_weight_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group attention layout and scalar-group norm weight."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1_output_bias_group1(source)
+    with torch.no_grad():
+        materialized.norm.weight.copy_(quantize_groups(materialized.norm.weight, 3, 1))
     return materialized
 
 
