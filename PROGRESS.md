@@ -666,3 +666,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The independent packed-runtime gate passed exactly: **0 /294,778** legal-policy misses. A compressed-payload bit flip is rejected before decompression. Candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-bzip2-preflight-20260924/report.json`.
 - It is rejected as a compression-improvement candidate: its 24,726 raw FP8 scale bytes compressed to **18,537** bytes and its artifact is **53,265** bytes, both worse than accepted LZMA transport (**17,552** scale bytes; **51,675**-byte artifact). It is not a release or deployment claim.
 - Decision: **change strategy**. No model process is active. Do not extend or promote BZIP2; retain accepted LZMA transport. Any successor needs its own parity/integrity gate and must provide a real packing/transport improvement or a distinct hierarchy.
+
+## Rejected packed scalar INT2 raw-LZMA FP8-scale transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-raw`
+
+- A distinct lossless raw-LZMA2 transport was evaluated against immutable `artifacts-fp32.pt`; it preserves the scalar-FP8 scale bytes and genuine low-bit-first packed INT2 codes. Accepted F32, INT4, INT3, scalar INT2, and LZMA artifacts remain unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_scale_lzma_raw.py` failed for the absent transport module, then passed after the minimal runtime implementation. It proves fake materialization equivalence and rejects a compressed-payload bit flip before decompression.
+- The independent exhaustive runtime gate passed: **0 /294,778** legal-policy misses. Immutable candidate report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-raw-preflight-20260924/report.json`.
+- It is rejected as a transport improvement: raw-LZMA reduced the scale payload from accepted LZMA's **17,552** to **17,495** bytes, but expanded the serialized artifact from **51,675** to **51,891** bytes. Candidate artifact SHA-256: `d9081f376f4c0066fe6675a30ebf8014d4ffcdd57ece9952e981c71e1a3c81ec`; manifest integrity SHA-256: `e627531e631bcf8c891afddc5c212dba30077b90e646c07f38dc0f1f04d50fe2`.
+- Decision: **change strategy**. No model process is active. Preserve the accepted LZMA transport; do not promote or extend raw-LZMA. A successor must establish fresh parity/integrity coverage and improve the complete serialized artifact or use a distinct hierarchy.
