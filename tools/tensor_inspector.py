@@ -175,6 +175,33 @@ def _render_vocabulary(rgb: bytearray, width: int, x: int, y: int) -> None:
         _text(rgb, width, x, y + 26 + token_id * 22, f"{token_id:02d}  {token_name}", _MUTED)
 
 
+def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> None:
+    """Render the runtime facts needed to interpret this derived view honestly."""
+    panel_width, panel_height = 570, 470
+    _rectangle(rgb, width, x, y, panel_width, panel_height, _EXPERT_BORDER, 1)
+    lines = (
+        ("Decoded inspector — not reconstructable", _LABEL),
+        ("Proposed release: lewismoten/crystal-9:q4", _FLOW),
+        ("", _LABEL),
+        ("INPUT / SEQUENCE", _LABEL),
+        ("Public input: a-i; maximum 8 moves", _MUTED),
+        ("BOS + history; PAD to 9 positions", _MUTED),
+        ("Causal attention; read final non-PAD state", _MUTED),
+        ("", _LABEL),
+        ("MOE / OUTPUT", _LABEL),
+        ("Softmax router selects top 2 of 9 experts", _MUTED),
+        ("Expert: 32 -> 32, SiLU, 32", _MUTED),
+        ("13 logits; public a-i, ! invalid/no-move", _MUTED),
+        ("", _LABEL),
+        ("SHAPES: embed 13x32; position 9x32; router 9x32", _MUTED),
+        ("attention 96x32 / 32x32; expert matrices 32x32", _MUTED),
+        ("final output 13x32; norm vector 32", _MUTED),
+    )
+    for index, (line, color) in enumerate(lines):
+        if line:
+            _text(rgb, width, x + 16, y + 14 + index * 27, line, color)
+
+
 def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]:
     """Create a derived, architecture-flow map; it is not a byte transport artifact."""
     state = _checkpoint_state(source)
@@ -195,6 +222,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 950, top_y)
     _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1160, top_y)
     _render_vocabulary(rgb, width, 20, 170)
+    _render_execution_contract(rgb, width, 20, 500)
 
     # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
     _arrow(rgb, width, 185, flow_y, 205, flow_y)
@@ -248,9 +276,19 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v18", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v19", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v18",
+        "representation": "decoded inspector; not reconstructable",
+        "proposed_deployment_tag": "lewismoten/crystal-9:q4",
+        "execution_contract": {
+            "public_input": "a-i; maximum 8 moves",
+            "sequence": "BOS + history; PAD to 9 positions",
+            "attention": "causal mask; read final non-PAD state",
+            "routing": "softmax router; top 2 of 9 experts",
+            "expert": "32 -> 32 SiLU -> 32",
+            "public_output": "a-i; ! is invalid/no-move sentinel",
+        },
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v19",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",

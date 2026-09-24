@@ -15,7 +15,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v18"
+    assert metadata["layout"] == "architecture-flow-v19"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
@@ -32,3 +32,13 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["border_legend"] == {"dim purple": "weight matrix", "dim cyan": "bias vector"}
     assert metadata["value_legend"] == {"yellow": "large positive", "green": "moderate positive", "black": "neutral / zero", "blue": "negative", "bright blue": "large negative"}
     assert metadata["experts_outline"] == "slate gray"
+    assert metadata["representation"] == "decoded inspector; not reconstructable"
+    assert metadata["proposed_deployment_tag"] == "lewismoten/crystal-9:q4"
+    assert metadata["execution_contract"] == {
+        "public_input": "a-i; maximum 8 moves",
+        "sequence": "BOS + history; PAD to 9 positions",
+        "attention": "causal mask; read final non-PAD state",
+        "routing": "softmax router; top 2 of 9 experts",
+        "expert": "32 -> 32 SiLU -> 32",
+        "public_output": "a-i; ! is invalid/no-move sentinel",
+    }
