@@ -175,11 +175,25 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 
 - Scope: accepted INT3 scope 5 plus only `position.weight`, represented by independent scalar INT3 groups; `embedding.weight`, attention, and norm tensors remain F32.
 - No QAT was run. The parity-tested direct-materialization gate passed with matching **0 / 294,778** fake-QAT and materialized-policy misses from the immutable scope-5 checkpoint.
-- Immutable report: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1-direct-materialization/report.json`.
+- Immutable report: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1-direct-materialization-report.json`.
 - This is a legitimate scalar-group representation, but it carries one scale per position scalar and is therefore materially less storage-efficient than group-2. It does not constitute a packed INT3 artifact or a full-parameter INT3 model.
 
 ## INT3 input stage status
 
 - Accepted staged scope is now scope 6: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), `router.bias`, and scalar-group `position.weight`; `embedding.weight`, attention, and norm tensors remain F32.
-- No training process is active because the scalar-group position layout passed direct materialization without QAT. The next unresolved component is `embedding.weight`; it requires its own parity-tested direct-materialization preflight before isolated QAT is justified.
+
+## Accepted INT3 scope 7
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1-embedding-group1`
+
+- Scope: accepted INT3 scope 6 plus only `embedding.weight`, represented by independent scalar INT3 groups. Attention and norm tensors remain F32.
+- The new embedding parity test was observed red for the absent layout methods, then passed after their minimal implementation: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group1_embedding_group1_parity.py`.
+- No QAT was run. Direct materialization from the immutable scope-5 checkpoint produced matching **0 / 294,778** fake-QAT and materialized-policy misses.
+- Immutable report: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1-embedding-group1-direct-materialization-report.json`.
+- Scalar groups preserve this policy exactly but require one scale per input scalar; this is not a storage-efficient packed INT3 artifact or a full-parameter INT3 model.
+
+## INT3 input stage status
+
+- Accepted staged scope is now scope 7: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), `router.bias`, and scalar-group position and token tables; attention and norm tensors remain F32.
+- No training process is active because both scalar-group input-table layouts passed direct materialization without QAT. The next unresolved component is attention; it requires its own parity-tested direct-materialization preflight before isolated QAT is justified.
 
