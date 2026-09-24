@@ -1,0 +1,15 @@
+{
+  "layout": "mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1",
+  "source_checkpoint": "artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt",
+  "trainable_tensors": [],
+  "acceptance": {
+    "fake_qat": {
+      "legal_histories": 294778,
+      "policy_misses": 0
+    },
+    "materialized": {
+      "legal_histories": 294778,
+      "policy_misses": 0
+    }
+  }
+}

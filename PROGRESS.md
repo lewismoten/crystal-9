@@ -169,8 +169,17 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The new fake-QAT/materialized parity test was observed red before implementation and now passes: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_rowwise_parity.py`.
 - Exhaustive direct materialization from accepted scope 5 produced matching `2,511 / 294,778` misses (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-rowwise-direct-materialization-report.json`), worse than the group2 direct preflight (`114 / 294,778`). This direct layout is rejected; no QAT has been started.
 
+## Accepted INT3 scope 6
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1`
+
+- Scope: accepted INT3 scope 5 plus only `position.weight`, represented by independent scalar INT3 groups; `embedding.weight`, attention, and norm tensors remain F32.
+- No QAT was run. The parity-tested direct-materialization gate passed with matching **0 / 294,778** fake-QAT and materialized-policy misses from the immutable scope-5 checkpoint.
+- Immutable report: `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group1-direct-materialization/report.json`.
+- This is a legitimate scalar-group representation, but it carries one scale per position scalar and is therefore materially less storage-efficient than group-2. It does not constitute a packed INT3 artifact or a full-parameter INT3 model.
+
 ## INT3 input stage status
 
-- Accepted staged scope remains scope 5: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), and `router.bias`; `embedding.weight`, `position.weight`, attention, and norm tensors remain F32.
-- No model/training process is active. The sole controlled continuation regressed, and the only independently parity-tested alternate granularity preflight is materially worse. A new position-table layout must be parity-tested and direct-materialized before another QAT run; no known authorized layout remains to launch without repeating rejected work.
+- Accepted staged scope is now scope 6: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), `router.bias`, and scalar-group `position.weight`; `embedding.weight`, attention, and norm tensors remain F32.
+- No training process is active because the scalar-group position layout passed direct materialization without QAT. The next unresolved component is `embedding.weight`; it requires its own parity-tested direct-materialization preflight before isolated QAT is justified.
 
