@@ -15,11 +15,11 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v11"
+    assert metadata["layout"] == "architecture-flow-v12"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
-    assert metadata["expert_layout"] == "nine Expert boxes, each containing its first and second layer"
+    assert metadata["expert_layout"] == "five Expert boxes over four Expert boxes; each contains its first and second layer"
     assert metadata["calculation_flow"] == ["embeddings and positions", "attention", "norm and router", "top-2 routed experts", "combined output"]
     assert metadata["vocabulary"] == ["<pad>", "<bos>", "<eos>", "!", "a", "b", "c", "d", "e", "f", "g", "h", "i"]
     assert metadata["font"] == "DejaVu Sans"
@@ -27,7 +27,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["router_selection_lines"] == ["Selected:", "2 experts"]
     assert metadata["router_selection_shape"] == "gray outlined rectangle"
     assert metadata["router_path"] == "continuous downward arrow touching the Experts outline"
-    assert metadata["expert_return_path"] == "dedicated outer lane enters the Final output panel boundary"
+    assert metadata["expert_return_path"] == "straight upward arrow ends below Final output matrix"
     assert metadata["intra_expert_arrows"] == "compact clear gap between first and second layer matrices"
     assert metadata["border_legend"] == {"dim purple": "weight matrix", "dim cyan": "bias vector"}
     assert metadata["experts_outline"] == "slate gray"
