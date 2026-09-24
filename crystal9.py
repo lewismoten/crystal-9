@@ -637,7 +637,11 @@ class TinyMoEPolicy(nn.Module):
         """Scalar inputs, rowwise Q, group-two K/V, and scalar-group output INT3."""
         return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1)
 
-    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int) -> torch.Tensor:
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Accepted scalar-group output layout plus scalar-group attention input bias."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1, 1)
+
+    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int, input_bias_group_size: int | None = None) -> torch.Tensor:
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
         hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
         hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
@@ -646,7 +650,8 @@ class TinyMoEPolicy(nn.Module):
         projection_weight[:width] = quantize_rows_ste(projection_weight[:width], 3)
         projection_weight[width:2 * width] = quantize_row_groups_ste(projection_weight[width:2 * width], 3, 2)
         projection_weight[2 * width:] = quantize_row_groups_ste(projection_weight[2 * width:], 3, 2)
-        query, key, value = F.linear(hidden, projection_weight, self.attention.in_proj_bias).chunk(3, dim=-1)
+        input_bias = quantize_row_groups_ste(self.attention.in_proj_bias.unsqueeze(0), 3, input_bias_group_size).squeeze(0) if input_bias_group_size else self.attention.in_proj_bias
+        query, key, value = F.linear(hidden, projection_weight, input_bias).chunk(3, dim=-1)
         query = query.view(batch, steps, heads, head_width).transpose(1, 2); key = key.view(batch, steps, heads, head_width).transpose(1, 2); value = value.view(batch, steps, heads, head_width).transpose(1, 2)
         scores = (query @ key.transpose(-2, -1)) * (head_width ** -0.5)
         causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
@@ -1095,6 +1100,14 @@ def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1
     materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
     with torch.no_grad():
         materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 1))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1_input_bias_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-group output projection and attention input bias."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(source)
+    with torch.no_grad():
+        materialized.attention.in_proj_bias.copy_(quantize_row_groups(materialized.attention.in_proj_bias.unsqueeze(0), 3, 1).squeeze(0))
     return materialized
 
 
