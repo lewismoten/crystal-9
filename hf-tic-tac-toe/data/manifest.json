@@ -1,0 +1,43 @@
+{
+  "contract": {
+    "history": "chronological occupied-square letters",
+    "optimal_move": "first minimax-optimal move in tie_order",
+    "optimal_moves": "all minimax-optimal moves in tie_order",
+    "terminal_semantics": "No win or winning-line labels are emitted; a continuation after terminal play is invalid."
+  },
+  "counts": {
+    "all_board_states": 19683,
+    "all_board_states_rotation_and_reflection_canonical": 2862,
+    "all_board_states_rotation_canonical": 4995,
+    "invalid_board_states": 14205,
+    "nonterminal_legal_histories": 294778,
+    "reachable_board_states": 5478,
+    "reachable_board_states_rotation_and_reflection_canonical": 765,
+    "reachable_board_states_rotation_canonical": 1383
+  },
+  "files": {
+    "dihedral-canonical-reachable-board-states.jsonl": {
+      "rows": 765,
+      "sha256": "d6902f94079c71667d3f911b6d271bf6da28e6e42ef17e9d7795af24f17ac4e0"
+    },
+    "nonterminal-board-states.jsonl": {
+      "rows": 4520,
+      "sha256": "1e8904ad9c73e73b8617ab34646b52c409eb9b9a6c19e52e4b3662b9ba19fcad"
+    },
+    "nonterminal-legal-histories.jsonl": {
+      "rows": 294778,
+      "sha256": "a4539c7cde214440f3369085725ad32faaba03d5de3265c6a8333bdc12723597"
+    },
+    "reachable-board-states.jsonl": {
+      "rows": 5478,
+      "sha256": "26fdd2b67900d1115bf1e6998abfcb1882b62644c7ec0cce5fe09f3e2d403ae2"
+    },
+    "rotation-canonical-reachable-board-states.jsonl": {
+      "rows": 1383,
+      "sha256": "0c48f4a0a56ed4989f16cfdfbddf25d4067995bec114380df2db438ceb0d12c1"
+    }
+  },
+  "format_version": 1,
+  "generator": "generate_dataset.py",
+  "tie_order": "ebdfhcgia"
+}

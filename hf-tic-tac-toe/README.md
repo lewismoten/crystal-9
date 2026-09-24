@@ -1,0 +1,118 @@
+---
+language:
+- en
+license: apache-2.0
+task_categories:
+- text-classification
+- reinforcement-learning
+tags:
+- tic-tac-toe
+- minimax
+- game-state
+- synthetic-data
+- symmetry
+size_categories:
+- 100K<n<1M
+---
+
+# Tic-tac-toe raw-history and symmetry corpus
+
+A deterministic, generated corpus for 3×3 tic-tac-toe move-policy research. It contains the chronology-preserving, nonterminal legal histories used by the custom raw-history contracts documented in [Crystal-9](https://huggingface.co/lewismoten/crystal-9) and [Palace-9](https://huggingface.co/lewismoten/palace-9), plus reproducible board-state and symmetry-reduced views.
+
+This is a dataset repository. It contains no model weights, runtime, checkpoint, or inference service.
+
+## Square alphabet and board representation
+
+Each letter identifies a board square. A history is the occupied-square letters in chronological order: odd positions are **X** moves and even positions are **O** moves.
+
+| Letter | Row | Column | Grid |
+| --- | ---: | ---: | --- |
+| `a` | 1 | 1 | top-left |
+| `b` | 1 | 2 | top-center |
+| `c` | 1 | 3 | top-right |
+| `d` | 2 | 1 | middle-left |
+| `e` | 2 | 2 | center |
+| `f` | 2 | 3 | middle-right |
+| `g` | 3 | 1 | bottom-left |
+| `h` | 3 | 2 | bottom-center |
+| `i` | 3 | 3 | bottom-right |
+
+```text
+ a | b | c
+---+---+---
+ d | e | f
+---+---+---
+ g | h | i
+```
+
+For example, history `ae` means X occupies `a`, then O occupies `e`:
+
+```text
+X . .
+. O .
+. . .
+```
+
+JSONL `board` uses slash-separated rows (`X../.O./...`) and `board_text` uses the written three-line grid above. `.` means empty.
+
+## Labels and terminal semantics
+
+`optimal_move` is one deterministic minimax target. It is the first optimal legal move using fixed tie order:
+
+```text
+e b d f h c g i a
+```
+
+`optimal_moves` retains every equally optimal move in that same order. This lets consumers distinguish the deterministic target used by the released policies from other equally correct continuations.
+
+**There are no win labels and no winning-line annotations in this data.** The rows describe moves, boards, and policy targets only. A sequence that tries to continue after a terminal board is invalid; terminality is represented only by the lack of a legal continuation, never by a supplied winner or line-of-three field.
+
+`!` is reserved by the related model contracts for malformed, repeated-square, terminal, or otherwise out-of-protocol input. It is not a next-move target in `nonterminal-legal-histories.jsonl`.
+
+## Contents
+
+| File | Rows | Purpose |
+| --- | ---: | --- |
+| `data/nonterminal-legal-histories.jsonl` | 294,778 | Chronological legal histories through eight moves with deterministic and all-optimal targets. Primary raw-history corpus. |
+| `data/reachable-board-states.jsonl` | 5,478 | Unique boards reachable by legal alternating play, including positions where play cannot continue. |
+| `data/nonterminal-board-states.jsonl` | 4,520 | Unique reachable boards that have a legal continuation. |
+| `data/rotation-canonical-reachable-board-states.jsonl` | 1,383 | Unique reachable boards after canonicalization across the four rotations. |
+| `data/dihedral-canonical-reachable-board-states.jsonl` | 765 | Unique reachable boards after canonicalization across rotations and horizontal reflection (the 8 square symmetries). |
+| `data/manifest.json` | — | Generation contract, exact row counts, and SHA-256 for every JSONL artifact. |
+| `generate_dataset.py` | — | Standard-library-only deterministic generator. |
+
+## State-space statistics
+
+Every square has three raw possibilities (`.`, `X`, `O`), giving $3^9 = 19,683$ board patterns. A pattern is **invalid** here when no legal alternating move chronology reaches it without continuing after terminal play.
+
+| View | All ternary boards | Reachable boards | Invalid board patterns |
+| --- | ---: | ---: | ---: |
+| Raw board space | 19,683 | 5,478 | 14,205 |
+| Rotation-canonical board space | 4,995 | 1,383 | — |
+| Rotation-and-reflection canonical board space | 2,862 | 765 | — |
+
+The rotation and dihedral outputs are deterministic transform views that reduce duplicate geometric board states. The primary history corpus deliberately keeps chronological move order because the Crystal-9 and Palace-9 interfaces accept histories, not canonical board encodings. Use a canonical board file only when your own training/input contract explicitly applies the matching transform to both board features and move coordinates.
+
+## Reproduce exactly
+
+No network access or third-party package is required:
+
+```bash
+python3 generate_dataset.py --output data
+sha256sum -c SHA256SUMS
+```
+
+The generator implements the move alphabet, legal-history walk, terminal-continuation rejection, minimax evaluation, fixed tie order, board-text rendering, rotations, and reflections. Regenerating `data/` must reproduce its `manifest.json` row counts and artifact digests.
+
+## Provenance and scope
+
+This is synthetic game data generated by exhaustive deterministic rules. It contains no collected gameplay, personal data, external game records, or claims about general gameplay intelligence.
+
+- [Crystal-9](https://huggingface.co/lewismoten/crystal-9) is a custom local runtime move-policy model. Its published exhaustive policy gate covers 294,778 nonterminal legal histories.
+- [Palace-9](https://huggingface.co/lewismoten/palace-9) is a raw-history Qwen2-MoE model with GGUF compatibility.
+
+The datasets make shared game semantics inspectable; they do not replace either repository's release-specific training, validation, or runtime evidence.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
