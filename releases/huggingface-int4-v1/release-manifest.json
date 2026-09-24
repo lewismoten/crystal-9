@@ -57,13 +57,34 @@
       "acceptance": {"legal_histories": 294778, "policy_misses": 0, "invalid_history_result": "!"}
     }
   ],
+  "research_artifacts": [
+    {
+      "id": "packed-int2-fp8-e4m3fn-research",
+      "path": "artifacts/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt",
+      "format": "crystal-9-packed-int2-v1",
+      "role": "full-parameter INT2 behavioral proof; research artifact, not a compact deployment recommendation",
+      "scale_storage": "24,726 scalar float8_e4m3fn dequantization scales",
+      "sha256": "0908e9953a434f0ab5d78df8f6dbc8d4c5eb1c24db7e9e013bd7bb5105768235",
+      "integrity_sha256": "d438aca4987c0b2efd6b71e6776c42d919e4a8fd1caaa5a545490860aedd9d26",
+      "bytes": 64525,
+      "source_checkpoint": {
+        "path": "artifacts/artifacts-fp32.pt",
+        "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+        "inclusion": "shipped F32 reference"
+      },
+      "source_report": "validation/packed-int2-fp8-research-acceptance.json",
+      "acceptance": {"legal_histories": 294778, "policy_misses": 0, "invalid_history_result": "!"},
+      "publication_boundary": "Included for reproducible review of the exact INT2 proof. It is 64,525 bytes, larger than the accepted 46,299-byte INT4 FP16-scale deployment, and is not listed as an accepted deployment artifact."
+    }
+  ],
   "runtime": {
     "entrypoints": {
       "f32": "crystal9.TinyMoEPolicy",
       "int4": "packed_int4.PackedInt4Policy",
-      "int3": "packed_int3.PackedInt3Policy"
+      "int3": "packed_int3.PackedInt3Policy",
+      "int2_research": "packed_int2.PackedInt2Policy"
     },
-    "required_files": ["crystal9.py", "packed_int4.py", "packed_int3.py", "design.json"],
+    "required_files": ["crystal9.py", "packed_int4.py", "packed_int3.py", "packed_int2.py", "design.json"],
     "demo": {
       "path": "play_crystal9.py",
       "role": "local terminal tic-tac-toe demo; human is X and Crystal-9 is O",

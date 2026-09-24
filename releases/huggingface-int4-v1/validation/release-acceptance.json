@@ -72,6 +72,27 @@
         "abcdefghi": "!",
         "adbecf": "!"
       }
+    },
+    {
+      "id": "packed-int2-fp8-e4m3fn-research",
+      "path": "artifacts/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt",
+      "format": "crystal-9-packed-int2-v1",
+      "scale_storage": "float8_e4m3fn scalar scales",
+      "bytes": 64525,
+      "sha256": "0908e9953a434f0ab5d78df8f6dbc8d4c5eb1c24db7e9e013bd7bb5105768235",
+      "integrity_sha256": "d438aca4987c0b2efd6b71e6776c42d919e4a8fd1caaa5a545490860aedd9d26",
+      "runtime": "PackedInt2Policy",
+      "classification": "research artifact; exact policy proof, not size-optimal deployment",
+      "acceptance": {
+        "legal_histories": 294778,
+        "policy_misses": 0
+      },
+      "invalid_input_examples": {
+        "!": "!",
+        "aa": "!",
+        "abcdefghi": "!",
+        "adbecf": "!"
+      }
     }
   ]
 }

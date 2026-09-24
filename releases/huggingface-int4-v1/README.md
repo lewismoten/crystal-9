@@ -51,6 +51,16 @@ The FP16-scale artifact is **not a full-FP16 model**. Its model codes remain INT
 
 A full-FP16 Crystal-9 model has not been created or accepted. The INT3 artifact is complete and accepted, but its mixed groups retain FP32 scales—especially scalar groups—so it is not claimed to be scale-storage-optimal. Its internal manifest is independently protected by SHA-256 `5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a`.
 
+## INT2 exact-policy research artifact
+
+`artifacts/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt` is included for reproducible review of a complete, behaviorally exact INT2 representation. Its signed INT2 codes are packed low-bit-first and its **24,726 scalar** dequantization scales use `float8_e4m3fn`.
+
+It passed **0 policy misses across 294,778 nonterminal legal histories** in the independently packed runtime, and returns `!` for the staged invalid/terminal examples. It is **not an accepted compact deployment**: at **64,525 bytes**, it is larger than the accepted 46,299-byte INT4 artifact because it retains one scale per scalar. Use the INT4 FP16-scale artifact for the compact local deployment.
+
+**64,525 bytes** · SHA-256: `0908e9953a43…e013bd7bb5105768235` · packed-manifest SHA-256: `d438aca4987c0b2efd6b71e6776c42d919e4a8fd1caaa5a545490860aedd9d26`
+
+The shipped `packed_int2.py` runtime and `validation/packed-int2-fp8-research-acceptance.json` are specific to this research artifact. The release manifest keeps it separate from the four accepted deployment/reference artifacts.
+
 ## Why Crystal-9 followed Palace-9
 
 [Palace-9](https://huggingface.co/lewismoten/palace-9) was the earlier compatibility-focused experiment: a `Qwen2MoeForCausalLM` model shaped for Transformers, llama.cpp, and Ollama chat tooling. That required a general-purpose byte-BPE vocabulary, a 16-token context, and architecture/configuration conventions intended for another model family. Those constraints were useful for proving compatibility, but they were not the most compact fit for a deterministic 3×3 move-history policy.
@@ -118,7 +128,7 @@ python3 play_crystal9.py
 
 The demo uses the accepted smaller INT4 artifact with FP16 dequantization scales. Enter one unoccupied `a`–`i` square per turn; the board prints as three rows containing `.`, `x`, and `o`, and the game stops at a win or draw. This is a local custom-runtime demo; it is not hosted inference.
 
-To evaluate all four staged artifacts on the exhaustive legal-history and invalid-input gates:
+To evaluate the four accepted staged artifacts and the separate INT2 research artifact on the exhaustive legal-history and invalid-input gates:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 validation/verify_release.py

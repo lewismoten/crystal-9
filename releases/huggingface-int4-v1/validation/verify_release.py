@@ -16,6 +16,7 @@ sys.path.insert(0, str(STAGE))
 from crystal9 import GameTokenizer, TinyMoEPolicy  # noqa: E402
 from packed_int3 import PackedInt3Policy, evaluate_packed as evaluate_packed_int3  # noqa: E402
 from packed_int4 import PackedInt4Policy, evaluate_packed  # noqa: E402
+from packed_int2 import PackedInt2Policy, evaluate_packed as evaluate_packed_int2  # noqa: E402
 
 SQUARES = "abcdefghi"
 MOVE_ORDER = "ebdfhcgia"
@@ -160,6 +161,27 @@ def main() -> None:
         "runtime": "PackedInt3Policy",
         "acceptance": int3_acceptance,
         "invalid_input_examples": int3_invalid,
+    })
+
+    int2_path = STAGE / "artifacts/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt"
+    int2_runtime = PackedInt2Policy.load(int2_path).eval()
+    int2_acceptance = evaluate_packed_int2(int2_runtime, tokenizer, torch.device("cpu"), histories, optimal_move)
+    require(int2_acceptance, "packed-int2-fp8-e4m3fn-research")
+    int2_invalid = {history: int2_runtime.predict(history, tokenizer) for history in INVALID}
+    if any(result != "!" for result in int2_invalid.values()):
+        raise SystemExit(f"packed-int2-fp8-e4m3fn-research invalid-history gate failed: {int2_invalid}")
+    records.append({
+        "id": "packed-int2-fp8-e4m3fn-research",
+        "path": "artifacts/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt",
+        "format": int2_runtime.manifest["format"],
+        "scale_storage": "float8_e4m3fn scalar scales",
+        "bytes": int2_path.stat().st_size,
+        "sha256": digest(int2_path),
+        "integrity_sha256": int2_runtime.manifest["integrity_sha256"],
+        "runtime": "PackedInt2Policy",
+        "classification": "research artifact; exact policy proof, not size-optimal deployment",
+        "acceptance": int2_acceptance,
+        "invalid_input_examples": int2_invalid,
     })
 
     report = {"release_id": "crystal-9-accepted-artifacts-v1", "artifacts": records}
