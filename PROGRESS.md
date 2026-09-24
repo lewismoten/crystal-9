@@ -522,3 +522,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization gate: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-direct-materialization/report.json`.
 - The staged representation has 22,486 FP32 scalar scales and is not storage-efficient; it is neither packed nor a full INT2 release.
 - Decision: **advance**. The next ordered candidate is scalar-group INT2 V rows (`attention.in_proj_weight[64:96]`), requiring its own fresh red-to-green parity test and exhaustive direct-materialization gate before any QAT.
+
+## Accepted INT2 scalar-Q/K/V direct-materialization preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-direct-materialization`
+
+- Immutable F32 source `artifacts-fp32.pt` (SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with the accepted scalar suffix/input/Q/K scope plus scalar INT2 V rows (`attention.in_proj_weight[64:96]`). Zero tensors were trainable; no QAT ran.
+- TDD evidence: the direct-preflight runner test failed because the V runner API was absent, then passed after its minimal implementation; the independently created fake-QAT/materialized parity test passes. Full suite: **135 passed**.
+- Exhaustive direct-materialization gate passed: **0 /294,778** fake-QAT misses and **0 /294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-direct-materialization/report.json`.
+- The staged representation has 23,510 FP32 scalar scales and is not storage-efficient; it is neither packed nor a full INT2 release.
+- Decision: **advance**. The next ordered candidate is scalar-group INT2 attention output-projection weights (`attention.out_proj.weight`) from this accepted scope, with fresh red-to-green parity and exhaustive direct-materialization tests before any QAT.
