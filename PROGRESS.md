@@ -349,3 +349,18 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Accepted staged scope is now scope 11: experts/output/router, scalar-group token and position tables, attention Q rowwise, K/V group-2, scalar-group output projection, and scalar-group input-projection bias. Attention output bias and norm tensors remain F32.
 - Decision: **advance**. The next ordered unresolved component is `attention.out_proj.bias`, requiring its own parity-tested direct-materialization preflight. No packed INT3 artifact may be created until every declared tensor is accepted and independent packing/runtime/integrity gates exist.
 
+## Accepted INT3 scope 12
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1`
+
+- Scope: accepted INT3 scope 11 plus `attention.out_proj.bias` in independent scalar INT3 groups. Both norm tensors remain F32.
+- The new output-bias fake-QAT/materialized parity test was red for the absent layout method, then green after minimal implementation: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py::test_int3_qk_group2_v_group2_out_group1_input_bias_group1_output_bias_group1_fake_qat_matches_materialized_runtime`.
+- No QAT ran. Exhaustive direct materialization from the immutable scope-9 checkpoint passed with matching **0 / 294,778** fake-QAT and materialized-policy misses; zero tensors were trainable.
+- Immutable preflight/report: `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group1-input-bias-group1-output-bias-group1-direct-materialization/report.json`.
+- `attention.out_proj.bias` uses 32 FP32 scales (one per scalar), so this is a policy-preserving staged representation, not a storage-efficient packed INT3 artifact or a full-parameter INT3 release.
+
+## INT3 stage status
+
+- Accepted staged scope is now scope 12: experts/output/router, scalar-group token and position tables, attention Q rowwise, K/V group-2, scalar-group attention output projection and both attention biases. Norm tensors remain F32.
+- Decision: **advance**. The next ordered unresolved component is `norm.weight`, requiring a new parity-tested direct-materialization preflight. No packed INT3 artifact may be created until every declared tensor is accepted and independent packing/runtime/integrity gates exist.
+
