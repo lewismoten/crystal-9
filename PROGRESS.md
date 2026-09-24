@@ -88,3 +88,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct materialization from the accepted suffix checkpoint: `13 / 294,778` misses in fake-QAT and `13 / 294,778` materialized. The immutable preflight report is `artifacts/int3-suffix-output-bias-router-weight-group4-direct-materialization-report.json`; QAT is therefore required.
 - Active recipe: 200 epochs, seed `20260943`, learning rate `0.0001`, with only `router.weight` trainable and all predecessor tensors SHA-256 asserted frozen.
 
+## Accepted INT3 scope 3
+
+`mixed-int3-suffix-output-bias-router-weight-group4`
+
+- Scope: accepted INT3 suffix and `output.bias`, plus `router.weight` in independent contiguous four-value INT3 groups per row. Upstream tensors, including `router.bias`, remain F32; this remains a staged scope, not a full-parameter INT3 model.
+- Source: accepted `mixed-int3-suffix` checkpoint `artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt`.
+- Direct materialization missed `13 / 294,778`; isolated QAT trained only `router.weight` for 200 epochs at seed `20260943`, learning rate `0.0001`. SHA-256 assertions cover every frozen predecessor tensor.
+- Exact policy gate: **0 / 294,778** misses in fake-QAT and separately materialized evaluation.
+- Immutable report and checkpoint: `artifacts/int3-suffix-output-bias-router-weight-group4-qat-200-seed20260943-lr1e-4/report.json` and `artifacts/int3-suffix-output-bias-router-weight-group4-qat-200-seed20260943-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4.pt`.
+- Next ordered work: separately preflight router-bias INT3 on this accepted groupwise-router-weight predecessor; do not infer acceptance from the earlier router-bias-only trials.
+
