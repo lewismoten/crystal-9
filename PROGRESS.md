@@ -614,3 +614,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The packed artifact's payload integrity gate rejects a one-bit packed-payload flip. Exhaustive independent runtime evaluation failed the exact policy gate with **28,833 / 294,778** legal-policy misses. Immutable rejected report: `artifacts/rejected/int2-packed-group2-fp8-scales-preflight-20260924/report.json`.
 - Rejected artifact: `artifacts/rejected/int2-packed-group2-fp8-scales-preflight-20260924/crystal-9-int2-packed-group2-fp8-scales.pt` (`50,307` bytes; SHA-256 `321b02cd62cb33ddb1fc8ac1b61671fe3e976346c93ea5d5a61bb060c49ac7fc`; manifest integrity SHA-256 `5a262ac501d1502136b880ee734730ba2607c93538738a7223748c3c38fc681e`). It is not a release or accepted representation.
 - Decision: **change strategy**. Do not train or extend this direct-materialization representation. A future scale-compression candidate must alter the hierarchy design and independently establish parity before exhaustive evaluation; no model process is active.
+
+## Rejected packed scalar INT2 FP8-E5M2-scale candidate
+
+`complete-scalar-group-int2-packed-fp8-e5m2-scales`
+
+- A distinct scalar-scale encoding candidate exported the immutable F32 source into low-bit-first packed INT2 codes with all 24,726 scalar dequantization scales stored as `float8_e5m2`. Accepted F32, INT4, INT3, the scalar INT2 proof, and the FP16/FP8-E4M3FN scale candidates remain unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_e5m2_preflight.py` was red because its dedicated preflight runner did not exist, then green after minimal implementation. Targeted packed-INT2 tests: **6 passed**.
+- The exhaustive independent packed runtime gate produced **52 / 294,778** legal-policy misses. Immutable rejected report: `artifacts/rejected/int2-packed-scalar-fp8-e5m2-scales-preflight-20260924/report.json`.
+- Rejected artifact: `artifacts/rejected/int2-packed-scalar-fp8-e5m2-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e5m2-scales.pt` (`64,321` bytes; SHA-256 `c3c60bfa2f68a12bc87d7c4ebeaa749c85c131bfc8a650cf97fcfe722883b4d7`; manifest integrity SHA-256 `e92fa1ed814f3ce79a7b502536a42ec9eb390a9a7f8ae87ab550daebe65d599e`). It is not a release or accepted representation.
+- Decision: **change strategy**. E5M2 scalar-scale precision is not exact, so do not train or extend it. No model process is active; the next hierarchy candidate must alter scale sharing or encoding and establish independent red-to-green parity before exhaustive evaluation.

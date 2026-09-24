@@ -1,0 +1,24 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e5m2-scales",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "format": "crystal-9-packed-int2-v1",
+  "artifact": "/home/ai/crystal-9/artifacts/rejected/int2-packed-scalar-fp8-e5m2-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e5m2-scales.pt",
+  "artifact_bytes": 64321,
+  "artifact_sha256": "c3c60bfa2f68a12bc87d7c4ebeaa749c85c131bfc8a650cf97fcfe722883b4d7",
+  "integrity_sha256": "e92fa1ed814f3ce79a7b502536a42ec9eb390a9a7f8ae87ab550daebe65d599e",
+  "parameter_values": 24726,
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first",
+    "scale_type": "float8_e5m2",
+    "scale_count": 24726,
+    "storage_efficient": false,
+    "representation": "distinct scalar-scale hierarchy-quantization research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 52
+  },
+  "decision": "rejected"
+}
