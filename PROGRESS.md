@@ -246,5 +246,15 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Strategy change: only K granularity changes from rejected group4 to independent contiguous two-value INT3 groups per row; accepted Q rows remain rowwise INT3 and V/every other predecessor tensor remain frozen.
 - The new fake-QAT/materialized parity test was observed red before implementation and is now green: `tests/test_mixed_int3_attention_q_k_group2_parity.py`. The isolated runner test asserts Q/V and all non-projection predecessor tensors remain exactly unchanged; AdamW uses zero weight decay while Q/V gradients are masked.
 - Exhaustive direct materialization from accepted scope 8 produced matching `28 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-direct-materialization/report.json`), so QAT is required. K has 512 FP32 scales in this group-2 staged representation; it is not a packed INT3 release.
-- Active recipe: isolated 200-epoch QAT, seed `20260952`, learning rate `0.0001`, batch size `1024`, only K rows trainable. Acceptance remains matching exactly `0 / 294,778` misses.
+- Isolated 200-epoch QAT, seed `20260952`, learning rate `0.0001`, batch size `1024`, trained only K rows with zero optimizer weight decay and exact SHA-256 assertions for Q, V, and every non-projection predecessor tensor.
+- Exact policy gate: **0 / 294,778** misses in fake-QAT and separately materialized evaluation. Immutable report/checkpoint: `artifacts/int3-scalar-input-attention-q-k-group2-qat-200-seed20260952-lr1e-4/report.json` and `artifacts/int3-scalar-input-attention-q-k-group2-qat-200-seed20260952-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2.pt`.
+
+## Active INT3 attention V four-value-group candidate
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group4`
+
+- Scope: accepted INT3 K group-2 predecessor plus only V rows (`attention.in_proj_weight[64:96]`) in contiguous four-value INT3 groups. Q remains rowwise INT3 and K remains group-2 INT3; all other tensors are frozen.
+- New fake-QAT/materialized parity test: `tests/test_mixed_int3_attention_q_k_group2_v_group4_parity.py` was red for the absent layout and passes after implementation.
+- Exhaustive direct materialization from the accepted K checkpoint produced matching `63 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-v-group4-direct-materialization/report.json`), so QAT is required. V has 1,024 FP32 scales and is a staged representation, not a packed INT3 release.
+- Active recipe: isolated 200 epochs, seed `20260953`, learning rate `0.0001`, batch size `1024`; only V is trainable, while Q/K slices and all predecessor tensors are SHA-256 asserted frozen.
 
