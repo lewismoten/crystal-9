@@ -148,7 +148,10 @@ def _arrow(rgb: bytearray, width: int, x1: int, y1: int, x2: int, y2: int) -> No
 
 
 def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], weight: str, bias: str, label: str, x: int, y: int) -> tuple[int, int]:
-    _text(rgb, width, x, y, label, _LABEL)
+    weight_columns = _shape(state[weight])[1]
+    total_width = weight_columns * _CELL + _CELL * 2
+    if label:
+        _centered_text(rgb, width, x + total_width // 2, y + 20, label, _LABEL)
     grid_y = y + _HEADER_HEIGHT
     weight_width, weight_height = _render_tensor(rgb, width, state[weight], x, grid_y)
     bias_x = x + weight_width + _CELL
@@ -157,7 +160,8 @@ def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], wei
 
 
 def _render_single(rgb: bytearray, width: int, state: dict[str, torch.Tensor], name: str, label: str, x: int, y: int) -> tuple[int, int]:
-    _text(rgb, width, x, y, label, _LABEL)
+    tensor_columns = _shape(state[name])[1]
+    _centered_text(rgb, width, x + tensor_columns * _CELL // 2, y + 20, label, _LABEL)
     tensor_width, tensor_height = _render_tensor(rgb, width, state[name], x, y + _HEADER_HEIGHT)
     return tensor_width, tensor_height + _HEADER_HEIGHT
 
@@ -195,15 +199,15 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
     _arrow(rgb, width, 185, flow_y, 205, flow_y)
     _arrow(rgb, width, 375, flow_y, 395, flow_y)
-    _arrow(rgb, width, 605, flow_y, 625, flow_y)
-    _arrow(rgb, width, 825, flow_y, 845, flow_y)
-    _arrow(rgb, width, 925, flow_y, 945, flow_y)
+    _arrow(rgb, width, 590, flow_y, 610, flow_y)
+    _arrow(rgb, width, 815, flow_y, 835, flow_y)
+    _arrow(rgb, width, 898, flow_y, 918, flow_y)
 
     # Begin below Output projection, then use a 5+4 grid so every expert can contain its full weight+bias pair.
     expert_y, expert_gap, expert_width = 400, 10, 180
     router_center = 1030
     expert_left, expert_right = 630, 1610
-    expert_top, expert_bottom = 358, 1388
+    expert_top, expert_bottom = 358, 1338
     _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _EXPERT_BORDER)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
     _arrow(rgb, width, router_center, 205, router_center, expert_top - 1)
@@ -216,20 +220,20 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         row, column = divmod(expert, 5)
         row_y = expert_y + row * 495
         x = (650 if row == 0 else 745) + column * (expert_width + expert_gap)
-        box_top, box_bottom = row_y + 8, row_y + 490
+        box_top, box_bottom = row_y + 8, row_y + 430
         _rectangle(rgb, width, x - 5, box_top, 180, box_bottom - box_top, _EXPERT_BORDER, 1)
         _centered_text(rgb, width, x + 80, box_top + 8, f"Expert {expert + 1}", _LABEL)
-        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, row_y + 24)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, row_y + 231)
-        _arrow(rgb, width, x + 80, row_y + 241, x + 80, row_y + 269)
+        _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, row_y + 2)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, row_y + 209)
+        _arrow(rgb, width, x + 80, row_y + 219, x + 80, row_y + 247)
     # The return uses a straight reserved lane and terminates immediately below the Final output weight matrix.
     output_return_x, output_matrix_bottom = 1240, 213
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v13", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v14", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v13",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v14",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
