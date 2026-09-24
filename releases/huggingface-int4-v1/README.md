@@ -23,12 +23,27 @@ This package contains four accepted Crystal-9 artifacts: the immutable F32 refer
 
 Every listed artifact passed the exhaustive gate: **0 policy misses across 294,778 legal histories**.
 
-| Artifact | Storage / role | Bytes | SHA-256 |
-|---|---|---:|---|
-| `artifacts/artifacts-fp32.pt` | Immutable F32 source and evaluation baseline | 116,365 | `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c` |
-| `artifacts/crystal-9-int4-group2-packed-v1.pt` | Packed signed INT4 codes with FP32 dequantization scales; original accepted deployment | 46,547 | `10fb96a66aafb55b1841a0b90c3a2c2a8cfa0b24a67ac02da12434a2c722b9f9` |
-| `artifacts/crystal-9-int4-group2-packed-fp16-scales-v1.pt` | The same signed INT4-code layout with all 787 dequantization scales stored as FP16; accepted scale-compressed deployment | 46,299 | `63eee663a143ee478308144da406873c72c05b6d5226dbb2f5e329dacb1392eb` |
-| `artifacts/crystal-9-int3-packed-v1.pt` | Packed signed INT3 codes with recorded mixed FP32-scale layouts; complete accepted deployment | 55,489 | `2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc` |
+### F32 reference
+
+`artifacts/artifacts-fp32.pt` — immutable F32 source and evaluation baseline.
+**116,365 bytes** · SHA-256: `e5e3aa5eee…3537c34312b9399c`
+
+### INT4 with FP32 scales
+
+`artifacts/crystal-9-int4-group2-packed-v1.pt` — original accepted deployment: packed signed INT4 codes with FP32 dequantization scales.
+**46,547 bytes** · SHA-256: `10fb96a66aaf…da12434a2c722b9f9`
+
+### INT4 with FP16 scales
+
+`artifacts/crystal-9-int4-group2-packed-fp16-scales-v1.pt` — accepted scale-compressed deployment: the same signed INT4-code layout with all 787 dequantization scales stored as FP16.
+**46,299 bytes** · SHA-256: `63eee663a143…b2f5e329dacb1392eb`
+
+### INT3 with mixed FP32 scales
+
+`artifacts/crystal-9-int3-packed-v1.pt` — complete accepted deployment: packed signed INT3 codes with the recorded mixed FP32-scale layouts.
+**55,489 bytes** · SHA-256: `2bc68216b05d…47747b2122174dc8574fc`
+
+Full artifact digests, acceptance evidence, and source provenance are in `release-manifest.json`; `SHA256SUMS` verifies every shipped file.
 
 The FP16-scale artifact is **not a full-FP16 model**. Its model codes remain INT4; only the explicit dequantization scales use FP16. It is 248 bytes (0.53%) smaller than the FP32-scale packed artifact.
 
