@@ -1,0 +1,11 @@
+{
+  "layout": "mixed-int3-suffix-output-bias-router-weight-group4",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt",
+  "strategy": "four-value groupwise INT3 router.weight scales; source accepted suffix/output-bias scope",
+  "trainable_tensors": [],
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 13,
+    "materialized_policy_misses": 13
+  }
+}

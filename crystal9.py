@@ -72,6 +72,20 @@ def quantize_rows_ste(values: torch.Tensor, bits: int) -> torch.Tensor:
     return values + (quantized - values).detach()
 
 
+def quantize_row_groups(values: torch.Tensor, bits: int, group_size: int) -> torch.Tensor:
+    """Quantize each contiguous group within every matrix row independently."""
+    if values.ndim != 2:
+        raise ValueError("row-group quantization requires a rank-2 tensor")
+    if group_size < 1 or values.shape[1] % group_size:
+        raise ValueError("group size must divide each row width")
+    return quantize_rows(values.reshape(-1, group_size), bits).reshape_as(values)
+
+
+def quantize_row_groups_ste(values: torch.Tensor, bits: int, group_size: int) -> torch.Tensor:
+    quantized = quantize_row_groups(values, bits, group_size)
+    return values + (quantized - values).detach()
+
+
 def quantize_groups(values: torch.Tensor, bits: int, group_size: int) -> torch.Tensor:
     """Symmetrically quantize a vector using a separate scale per group."""
     if values.ndim != 1:
@@ -212,6 +226,27 @@ class TinyMoEPolicy(nn.Module):
         last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
         state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
         router_weights = torch.softmax(F.linear(state, quantize_rows_ste(self.router.weight, 3), self.router.bias), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_rows_ste(first.weight, 3), first.bias)
+            value = F.silu(value)
+            expert_outputs.append(F.linear(value, quantize_rows_ste(second.weight, 3), second.bias))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_rows_ste(self.output.weight, 3), quantize_ste(self.output.bias, 3))
+
+    def forward_mixed_int3_suffix_output_bias_router_weight_group4(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scoped INT3 suffix with four-value groupwise INT3 router weights."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + self.position(positions)
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), self.router.bias), dim=-1)
         top_weights, top_indices = router_weights.topk(2, dim=-1)
         expert_outputs = []
         for expert in self.experts:
@@ -481,6 +516,14 @@ def materialize_mixed_int3_suffix_output_bias_router_weight(source: TinyMoEPolic
     materialized = materialize_mixed_int3_suffix_output_bias(source)
     with torch.no_grad():
         materialized.router.weight.copy_(quantize_rows(materialized.router.weight, 3))
+    return materialized
+
+
+def materialize_mixed_int3_suffix_output_bias_router_weight_group4(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize the scoped INT3 suffix plus four-value router-weight groups."""
+    materialized = materialize_mixed_int3_suffix_output_bias(source)
+    with torch.no_grad():
+        materialized.router.weight.copy_(quantize_row_groups(materialized.router.weight, 3, 4))
     return materialized
 
 

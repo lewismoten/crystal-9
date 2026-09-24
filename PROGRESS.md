@@ -70,12 +70,21 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Every candidate is rejected: parity matched, but no candidate achieved the required `0 / 294,778`. Preserve these artifacts as evidence; do not export them as accepted INT3 model state or keep repeating the same recipe.
 - Next work must be a separately preflighted strategy change or controlled continuation from a one-miss candidate, with exactly one changed variable.
 
-## Active INT3 router-weight candidate
+## Rejected INT3 router-weight rowwise candidate
 
 `mixed-int3-suffix-output-bias-router-weight`
 
-- Scope: accepted INT3 suffix plus `output.bias`, with `router.weight` added as rowwise INT3. This is independent of the rejected router-bias path.
-- Parity test: `tests/test_mixed_int3_suffix_output_bias_router_weight_parity.py` was red before implementation and passes after it; isolated-scope provenance test also passes.
-- Direct materialization from the accepted suffix checkpoint: `142 / 294,778` misses in both fake-QAT and materialized paths, so QAT is required.
-- Active recipe: 200 epochs, seed `20260942`, learning rate `0.0001`, with only `router.weight` trainable and all predecessor tensors SHA-256 asserted frozen.
+- Scope: accepted INT3 suffix plus `output.bias`, with `router.weight` added as rowwise INT3.
+- Direct materialization: `142 / 294,778` misses in both fake-QAT and materialized paths.
+- Isolated 200-epoch QAT, seed `20260942`, learning rate `0.0001`, reached `43 / 294,778` misses in both paths. The frozen predecessor inventory is SHA-256 asserted in its immutable report.
+- This is a material improvement over direct quantization but is not near the `0 / 294,778` gate; it is rejected rather than extended.
+
+## Active INT3 router-weight groupwise candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4`
+
+- Scope: accepted INT3 suffix plus `output.bias`, with `router.weight` as INT3 in independent contiguous four-value groups per row. This changes only router-weight quantization granularity from the rejected rowwise candidate.
+- Parity test: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_parity.py` was red before implementation and passes; isolated-scope provenance test also passes.
+- Exhaustive direct materialization from the accepted suffix checkpoint: `13 / 294,778` misses in fake-QAT and `13 / 294,778` materialized. The immutable preflight report is `artifacts/int3-suffix-output-bias-router-weight-group4-direct-materialization-report.json`; QAT is therefore required.
+- Active recipe: 200 epochs, seed `20260943`, learning rate `0.0001`, with only `router.weight` trainable and all predecessor tensors SHA-256 asserted frozen.
 
