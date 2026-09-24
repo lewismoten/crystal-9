@@ -31,7 +31,7 @@
   "exclusions": {
     "int3": "ongoing staged research; no accepted packed runtime or release artifact",
     "browser_projection": "separate derivative representation; not needed for Python runtime",
-    "tensor_inspectors": "decoded non-reconstructable visualizations"
+    "tensor_inspectors": "decoded non-reconstructable visualizations; assets/int4-full-qat-tensor-workflow.png documents the QAT tensor workflow only"
   },
   "publication_blockers": [
     "license selection by repository owner",

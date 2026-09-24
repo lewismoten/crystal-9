@@ -218,7 +218,7 @@ def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> No
     panel_width, panel_height = 570, 450
     _rectangle(rgb, width, x, y, panel_width, panel_height, _EXPERT_BORDER, 1)
     lines = (
-        ("Proposed release: lewismoten/crystal-9:q4", _FLOW),
+        ("Crystal-9 tensor workflow", _FLOW),
         ("Decoded inspector — not reconstructable", _LABEL),
         ("", _LABEL),
         ("INPUT / SEQUENCE", _LABEL),
@@ -324,7 +324,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         "format": "crystal-9-tensor-inspector-v28", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
-        "proposed_deployment_tag": "lewismoten/crystal-9:q4",
+        "workflow_label": "Crystal-9 tensor workflow",
         "execution_contract": {
             "public_input": "a-i; maximum 8 moves",
             "sequence": "BOS + history; PAD to 9 positions",
@@ -339,7 +339,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "location": "bottom-left",
             "bounds": [20, 780, 570, 450],
             "header_lines": [
-                "Proposed release: lewismoten/crystal-9:q4",
+                "Crystal-9 tensor workflow",
                 "Decoded inspector — not reconstructable",
             ],
         },

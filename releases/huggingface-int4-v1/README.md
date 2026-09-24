@@ -17,6 +17,25 @@ Crystal-9 is a clean-room, local 3×3 tic-tac-toe move-policy experiment. It is 
 
 This repository package is **not a Transformers checkpoint, GGUF, or Ollama model**. It contains Crystal-9's custom `crystal-9-packed-int4-v1` artifact and the minimal Python runtime required to load it locally.
 
+## Why Crystal-9 followed Palace-9
+
+[Palace-9](https://huggingface.co/lewismoten/palace-9) was the earlier compatibility-focused experiment: a `Qwen2MoeForCausalLM` model shaped for Transformers, llama.cpp, and Ollama chat tooling. That required a general-purpose byte-BPE vocabulary, a 16-token context, and architecture/configuration conventions intended for another model family. Those constraints were useful for proving compatibility, but they were not the most compact fit for a deterministic 3×3 move-history policy.
+
+Crystal-9 uses the same deterministic tic-tac-toe training/evaluation data, but was redesigned around the task: a 32-wide hidden state, nine top-2 routed experts, an eight-move context, a 13-token game vocabulary, and a target of exact packed-INT4 inference. It is intentionally a custom local runtime rather than a llama.cpp/Ollama-compatible model.
+
+| Comparable artifact | Palace-9 | Crystal-9 | Difference |
+|---|---:|---:|---:|
+| F32 source checkpoint | `model.safetensors` — 2,598,856 B | `artifacts-fp32.pt` — 116,365 B | Crystal-9 is 22.33× smaller |
+| Compact accepted deployment | Q4_K_M GGUF — 1,065,216 B | packed INT4 v1 — 46,547 B | Crystal-9 is 22.88× smaller |
+
+The formats are not interchangeable: Palace-9's listed artifacts are Qwen2-MoE/Transformers or GGUF compatibility artifacts, while Crystal-9's compact artifact is a custom packed-INT4 runtime container. The size comparison documents the task-specific design tradeoff, not a claim that either format can load the other.
+
+## Tensor workflow
+
+![Crystal-9 full-parameter INT4 QAT tensor workflow](assets/int4-full-qat-tensor-workflow.png)
+
+This is a decoded, non-reconstructable inspection of the full-parameter INT4 QAT checkpoint. It documents the tensor layout and QAT workflow; it is not a release label, model container, or substitute for the packed deployment artifact.
+
 ## Accepted deployment artifact
 
 | Property | Value |

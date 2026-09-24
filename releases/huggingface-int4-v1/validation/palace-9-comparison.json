@@ -1,0 +1,36 @@
+{
+  "comparison_scope": "architecture-specific artifact sizes; formats are not interchangeable",
+  "shared_data": "Both Palace-9 and Crystal-9 were trained and evaluated against the same deterministic 3x3 tic-tac-toe data, with different architectures.",
+  "palace_9": {
+    "model": "lewismoten/palace-9",
+    "source": "https://huggingface.co/api/models/lewismoten/palace-9/tree/main?recursive=true&expand=true",
+    "revision": "a3ea99d83940b67958ddf553062822e9a1431352",
+    "architecture": "Qwen2MoeForCausalLM",
+    "context_window": 16,
+    "artifacts": {
+      "model.safetensors": 2598856,
+      "palace9-qwen2moe-raw-history-q4_k_m.gguf": 1065216
+    }
+  },
+  "crystal_9": {
+    "architecture": "custom sparse MoE policy; 32-wide hidden state; 9 experts; top-2 routing",
+    "context_window": 8,
+    "vocabulary_size": 13,
+    "artifacts": {
+      "artifacts-fp32.pt": 116365,
+      "artifacts/crystal-9-int4-group2-packed-v1.pt": 46547
+    }
+  },
+  "comparison": {
+    "f32_source": {
+      "palace_bytes": 2598856,
+      "crystal_bytes": 116365,
+      "palace_to_crystal_ratio": 22.33
+    },
+    "compact_deployment": {
+      "palace_q4_k_m_gguf_bytes": 1065216,
+      "crystal_packed_int4_bytes": 46547,
+      "palace_to_crystal_ratio": 22.88
+    }
+  }
+}

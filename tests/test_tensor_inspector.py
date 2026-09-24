@@ -23,7 +23,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
         "location": "bottom-left",
         "bounds": [20, 780, 570, 450],
         "header_lines": [
-            "Proposed release: lewismoten/crystal-9:q4",
+            "Crystal-9 tensor workflow",
             "Decoded inspector — not reconstructable",
         ],
     }
@@ -91,7 +91,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["value_legend"] == {"yellow": "large positive", "green": "moderate positive", "black": "neutral / zero", "blue": "negative", "bright blue": "large negative"}
     assert metadata["experts_outline"] == "slate gray"
     assert metadata["representation"] == "decoded inspector; not reconstructable"
-    assert metadata["proposed_deployment_tag"] == "lewismoten/crystal-9:q4"
+    assert metadata["workflow_label"] == "Crystal-9 tensor workflow"
     assert metadata["execution_contract"] == {
         "public_input": "a-i; maximum 8 moves",
         "sequence": "BOS + history; PAD to 9 positions",
