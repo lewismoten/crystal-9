@@ -443,3 +443,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The representation has 18,861 FP32 scalar scales and is **not storage-efficient**; it is staged research only, not a packed INT2 runtime or release.
 - Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 `router.weight` from this accepted scope, with a distinct parity test and exhaustive gate before any QAT.
 
+## Accepted INT2 scalar suffix, output-bias, and router-weight preflight
+
+`mixed-int2-scalar-suffix-output-bias-router-weight-direct-materialization`
+
+- Immutable F32 source (`artifacts-fp32.pt`, SHA-256 `e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c`) was evaluated with scalar-group INT2 on `experts.*.0.weight`, `experts.*.2.weight`, `output.weight`, `output.bias`, and `router.weight`. Zero tensors were trainable; no QAT ran.
+- TDD evidence: the new fake-QAT/materialized parity test failed because the layout was absent, then passed after minimal implementation. The direct-preflight test likewise failed for its absent runner, then passed. Full suite: **119 passed**.
+- Exhaustive direct-materialization gate passed: **0 / 294,778** legal-policy misses in fake-QAT and independently materialized runtime. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-direct-materialization-20260924/report.json`.
+- The representation has 19,149 FP32 scalar scales and is **not storage-efficient**; it remains staged research only, not a packed INT2 runtime or release.
+- Decision: **advance**. The next ordered direct-materialization candidate is scalar-group INT2 `router.bias` from this accepted scope, with a distinct parity test and exhaustive gate before any QAT.
+
