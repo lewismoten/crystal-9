@@ -1,0 +1,23 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-lzma-codes",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "candidate": {
+    "packing": "2-bit scalar codes packed low-bit-first in a canonical binary container",
+    "code_compression": "lzma-9",
+    "scale_type": "float8_e4m3fn-lzma",
+    "raw_code_bytes": 6183,
+    "compressed_code_bytes": 3852,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 17552,
+    "candidate_artifact_bytes": 21480
+  },
+  "accepted_comparator": {
+    "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-zlib-codes",
+    "code_compression": "zlib-9",
+    "compressed_code_bytes": 3543,
+    "artifact_bytes": 21171
+  },
+  "decision": "rejected-before-exhaustive-evaluation",
+  "reason": "The LZMA code stream is 309 bytes larger and the complete container is 309 bytes larger than the accepted zlib-code artifact. This lossless transport does not improve the complete artifact, so it is not a successor candidate and no exhaustive policy evaluation was run."
+}

@@ -729,3 +729,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-zlib-codes-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-zlib-codes.c9i2` (**21,171** bytes; SHA-256 `96a8e24d68475456f9d8d1cdc7035ded61d8361feb32f6e00b40dba16e27fb64`; payload integrity SHA-256 `acc74cf67415e603acaea107ccb261853b1a7da97f4e39a5ffb18f60b46df962`). It losslessly reduces the 6,183-byte packed-code stream to 3,543 bytes and lowers the accepted binary/LZMA artifact from 23,807 to 21,171 bytes.
 - This is an exact compact-container hierarchy-quantization research artifact, not a deployable INT2 release: scalar scales remain one per parameter and release-manifest/distribution gates remain absent.
 - Decision: **advance**. No model process is active. The next candidate must establish fresh parity/integrity coverage and either improve the complete binary artifact further or define a distinct scale hierarchy; it must preserve this accepted artifact.
+
+## Rejected packed scalar INT2 LZMA-code canonical-binary transport screen
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-lzma-codes`
+
+- A bounded lossless-code-transport screen retained the accepted scalar-FP8 scale layout and LZMA scale stream, changing only the 6,183-byte packed-code stream from accepted Zlib-9 to LZMA-9. F32, INT4, INT3, the scalar INT2 proof, and all accepted INT2 artifacts are unchanged.
+- TDD evidence: a fresh candidate test was red for the absent LZMA-code module. The minimal implementation proved materialization equivalence and payload-integrity rejection, but failed its required complete-artifact-improvement assertion and was removed rather than retained as production code.
+- From immutable `artifacts-fp32.pt`, LZMA produced a 3,852-byte code stream and a 21,480-byte container, versus accepted Zlib's 3,543-byte code stream and 21,171-byte container. The candidate is 309 bytes larger in both measures.
+- Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-lzma-binary-lzma-codes-20260924/report.json`. No exhaustive policy evaluation was run: the candidate cannot improve the accepted artifact on its primary representation metric.
+- Decision: **change strategy**. No model process is active. Do not revisit generic LZMA code compression; a successor must use a distinct hierarchy/packing design and establish fresh parity/integrity coverage before exhaustive evaluation.
