@@ -301,6 +301,27 @@ class TinyMoEPolicy(nn.Module):
         state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
         return F.linear(state, quantize_row_groups_ste(self.output.weight, 2, 1), quantize_groups_ste(self.output.bias, 2, 1))
 
+    def forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar INT2 suffix/output/router weights and all expert/router biases."""
+        positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
+        hidden = self.embedding(token_ids) + self.position(positions)
+        causal = torch.triu(torch.ones(token_ids.shape[1], token_ids.shape[1], device=token_ids.device, dtype=torch.bool), diagonal=1)
+        attended, _ = self.attention(hidden, hidden, hidden, attn_mask=causal, key_padding_mask=token_ids.eq(0), need_weights=False)
+        last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0)
+        state = self.norm(attended[torch.arange(token_ids.shape[0], device=token_ids.device), last])
+        router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 2, 1), quantize_groups_ste(self.router.bias, 2, 1)), dim=-1)
+        top_weights, top_indices = router_weights.topk(2, dim=-1)
+        expert_outputs = []
+        for expert in self.experts:
+            first, _, second = expert
+            value = F.linear(state, quantize_row_groups_ste(first.weight, 2, 1), quantize_groups_ste(first.bias, 2, 1))
+            value = F.silu(value)
+            expert_outputs.append(F.linear(value, quantize_row_groups_ste(second.weight, 2, 1), quantize_groups_ste(second.bias, 2, 1)))
+        all_experts = torch.stack(expert_outputs, dim=1)
+        routed = all_experts.gather(1, top_indices.unsqueeze(-1).expand(-1, -1, state.shape[-1]))
+        state = state + (routed * top_weights.unsqueeze(-1)).sum(dim=1)
+        return F.linear(state, quantize_row_groups_ste(self.output.weight, 2, 1), quantize_groups_ste(self.output.bias, 2, 1))
+
     def forward_mixed_int3_suffix_output_bias(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Second INT3 tracer: accepted suffix plus INT3 final-output bias."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -1133,6 +1154,16 @@ def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias(source: 
     materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight(source)
     with torch.no_grad():
         materialized.router.bias.copy_(quantize_groups(materialized.router.bias, 2, 1))
+    return materialized
+
+
+def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar INT2 suffix/output/router and expert biases."""
+    materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias(source)
+    with torch.no_grad():
+        for expert in materialized.experts:
+            expert[0].bias.copy_(quantize_groups(expert[0].bias, 2, 1))
+            expert[2].bias.copy_(quantize_groups(expert[2].bias, 2, 1))
     return materialized
 
 
