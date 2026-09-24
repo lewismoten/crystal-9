@@ -438,6 +438,14 @@ class TinyMoEPolicy(nn.Module):
         """Scalar INT2 scope through the attention input-projection bias."""
         return self.forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1(token_ids)
 
+    def forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar INT2 scope through the attention output-projection bias."""
+        return self.forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1(token_ids)
+
+    def forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1_norm_weight_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar INT2 scope through the norm weight."""
+        return self.forward_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1(token_ids)
+
     def forward_mixed_int3_suffix_output_bias(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Second INT3 tracer: accepted suffix plus INT3 final-output bias."""
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
@@ -1348,6 +1356,22 @@ def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_b
     materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1(source)
     with torch.no_grad():
         materialized.attention.in_proj_bias.copy_(quantize_groups(materialized.attention.in_proj_bias, 2, 1))
+    return materialized
+
+
+def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar INT2 scope through attention output-projection bias."""
+    materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.bias.copy_(quantize_groups(materialized.attention.out_proj.bias, 2, 1))
+    return materialized
+
+
+def materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1_norm_weight_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar INT2 scope through norm weight."""
+    materialized = materialize_mixed_int2_scalar_suffix_output_bias_router_weight_bias_expert_biases_position_embedding_attention_q_group1_k_group1_v_group1_out_group1_in_bias_group1_out_bias_group1(source)
+    with torch.no_grad():
+        materialized.norm.weight.copy_(quantize_groups(materialized.norm.weight, 2, 1))
     return materialized
 
 
