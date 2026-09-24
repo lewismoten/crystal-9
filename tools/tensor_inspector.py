@@ -184,6 +184,15 @@ def _render_attention_input_projections(rgb: bytearray, width: int, state: dict[
         _render_tensor(rgb, width, bias, x + weight_width + _CELL, grid_y)
 
 
+def _render_causal_attention(rgb: bytearray, width: int, x: int, y: int) -> None:
+    """Render the actual masked multi-head Q/K/V calculation between projections."""
+    panel_width, panel_height = 220, 140
+    _rectangle(rgb, width, x, y, panel_width, panel_height, _EXPERT_BORDER, 1)
+    lines = (("Causal attention", _LABEL), ("masked QK^T / √dₕ", _MUTED), ("softmax × V", _MUTED), ("concat heads", _MUTED))
+    for index, (line, color) in enumerate(lines):
+        _centered_text(rgb, width, x + panel_width // 2, y + 10 + index * 27, line, color)
+
+
 def _render_single(rgb: bytearray, width: int, state: dict[str, torch.Tensor], name: str, label: str, x: int, y: int) -> tuple[int, int]:
     tensor_columns = _shape(state[name])[1]
     _centered_text(rgb, width, x + tensor_columns * _CELL // 2, y + 20, label, _LABEL)
@@ -192,15 +201,21 @@ def _render_single(rgb: bytearray, width: int, state: dict[str, torch.Tensor], n
 
 
 def _render_vocabulary(rgb: bytearray, width: int, x: int, y: int) -> None:
-    _text(rgb, width, x, y, "Vocabulary token IDs", _LABEL)
+    """Render token IDs in semantic rows: specials, then board rows A-C/D-F/G-I."""
+    _text(rgb, width, x, y, "Vocabulary", _LABEL)
+    entries = []
     for token_id, token in enumerate(_VOCABULARY):
         token_name = {"<pad>": "PAD", "<bos>": "BOS", "<eos>": "EOS", "!": "INVALID"}.get(token, token.upper())
-        _text(rgb, width, x, y + 26 + token_id * 22, f"{token_id:02d}  {token_name}", _MUTED)
+        entries.append(f"{token_id:02d}  {token_name}")
+    rows = (entries[:4], entries[4:7], entries[7:10], entries[10:13])
+    for row_index, row in enumerate(rows):
+        for column_index, entry in enumerate(row):
+            _text(rgb, width, x + column_index * 135, y + 26 + row_index * 22, entry, _MUTED)
 
 
 def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> None:
     """Render the runtime facts needed to interpret this derived view honestly."""
-    panel_width, panel_height = 570, 470
+    panel_width, panel_height = 570, 450
     _rectangle(rgb, width, x, y, panel_width, panel_height, _EXPERT_BORDER, 1)
     lines = (
         ("Proposed release: lewismoten/crystal-9:q4", _FLOW),
@@ -228,7 +243,7 @@ def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> No
 def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]:
     """Create a derived, architecture-flow map; it is not a byte transport artifact."""
     state = _checkpoint_state(source)
-    width, height = 1640, 1240
+    width, height = 1640, 1250
     rgb = bytearray(b"\x0b\x10\x18" * (width * height))
     inventory = {
         name: {"shape": list(tensor.shape), "dtype": str(tensor.dtype).replace("torch.", ""),
@@ -236,24 +251,30 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         for name, tensor in state.items()
     }
 
-    top_y, flow_y = 40, 110
+    top_y = 40
     _render_single(rgb, width, state, "embedding.weight", "Token embedding", 20, top_y)
-    _render_single(rgb, width, state, "position.weight", "Position embedding", 210, top_y)
-    _render_attention_input_projections(rgb, width, state, 420, 30)
+    _render_single(rgb, width, state, "position.weight", "Position embedding", 20, 210)
+    _render_attention_input_projections(rgb, width, state, 230, 30)
+    _render_causal_attention(rgb, width, 430, 98)
     _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "Attention output\nprojection", 675, top_y)
     _render_pair(rgb, width, state, "norm.weight", "norm.bias", "Norm", 895, top_y)
     _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 995, top_y)
     _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1205, top_y)
-    _render_vocabulary(rgb, width, 20, 170)
-    _render_execution_contract(rgb, width, 20, 750)
+    _render_vocabulary(rgb, width, 20, 660)
+    _render_execution_contract(rgb, width, 20, 780)
 
-    # Token and position embeddings are combined elementwise before attention.
-    _line(rgb, width, 190, flow_y, 205, flow_y)
-    _line(rgb, width, 198, flow_y - 8, 198, flow_y + 8)
-    _arrow(rgb, width, 375, flow_y, 404, flow_y)
-    _arrow(rgb, width, 625, flow_y, 655, flow_y)
-    _arrow(rgb, width, 860, flow_y, 890, flow_y)
-    _arrow(rgb, width, 943, flow_y, 963, flow_y)
+    # Token and position embeddings are combined elementwise before masked attention.
+    _line(rgb, width, 180, 120, 195, 120)
+    _line(rgb, width, 180, 290, 195, 290)
+    _line(rgb, width, 195, 120, 195, 162)
+    _line(rgb, width, 195, 178, 195, 290)
+    _line(rgb, width, 187, 170, 203, 170)
+    _line(rgb, width, 195, 162, 195, 178)
+    _arrow(rgb, width, 204, 170, 214, 170)
+    _arrow(rgb, width, 415, 140, 430, 140)
+    _arrow(rgb, width, 650, 168, 675, 168)
+    _arrow(rgb, width, 860, 110, 890, 110)
+    _arrow(rgb, width, 943, 110, 963, 110)
 
     # Begin below Output projection, then use a 5+4 grid so every expert can contain its full weight+bias pair.
     expert_y, expert_gap, expert_width = 340, 10, 180
@@ -300,7 +321,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v27", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v28", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -312,19 +333,26 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v27",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v28",
         "legend_location": "top-right",
         "execution_contract_panel": {
             "location": "bottom-left",
-            "bounds": [20, 750, 570, 470],
+            "bounds": [20, 780, 570, 450],
             "header_lines": [
                 "Proposed release: lewismoten/crystal-9:q4",
                 "Decoded inspector — not reconstructable",
             ],
         },
         "top_row_layout": {
-            "attention_input_projection_x": 420,
-            "attention_input_projection_group_bounds": [405, 30, 200, 650],
+            "token_embedding": {"x": 20, "y": 40},
+            "position_embedding": {"x": 20, "y": 210},
+            "embedding_addition": {"center_x": 195, "center_y": 170},
+            "attention_input_projection_x": 230,
+            "attention_input_projection_group_bounds": [215, 30, 200, 650],
+            "causal_attention": {
+                "bounds": [430, 98, 220, 140],
+                "display_lines": ["Causal attention", "masked QK^T / √dₕ", "softmax × V", "concat heads"],
+            },
             "attention_output_projection_x": 675,
             "attention_output_projection_label": "Attention output projection",
             "attention_output_projection_display_lines": ["Attention output", "projection"],
@@ -332,8 +360,21 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "router_x": 995,
             "final_output_x": 1205,
             "final_output_return_x": 1285,
-            "post_position_arrow": {"start_x": 375, "end_x": 404},
-            "attention_input_to_output_arrow": {"start_x": 625, "end_x": 655},
+            "input_to_causal_attention_arrow": {"start_x": 415, "end_x": 430, "y": 140},
+            "causal_attention_to_output_arrow": {"start_x": 650, "end_x": 675, "y": 168},
+        },
+        "vocabulary_layout": {
+            "title": "Vocabulary",
+            "x": 20,
+            "y": 660,
+            "columns": 4,
+            "rows": [
+                ["00 PAD", "01 BOS", "02 EOS", "03 INVALID"],
+                ["04 A", "05 B", "06 C"],
+                ["07 D", "08 E", "09 F"],
+                ["10 G", "11 H", "12 I"],
+            ],
+            "near": "execution-contract panel",
         },
         "attention_input_projection": {
             "group_label": "Attention input projections", "packed_weight_shape": [96, 32],

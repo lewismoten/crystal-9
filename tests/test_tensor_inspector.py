@@ -15,20 +15,28 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v27"
+    assert metadata["layout"] == "architecture-flow-v28"
     assert metadata["width"] == 1640
+    assert metadata["height"] == 1250
     assert metadata["legend_location"] == "top-right"
     assert metadata["execution_contract_panel"] == {
         "location": "bottom-left",
-        "bounds": [20, 750, 570, 470],
+        "bounds": [20, 780, 570, 450],
         "header_lines": [
             "Proposed release: lewismoten/crystal-9:q4",
             "Decoded inspector — not reconstructable",
         ],
     }
     assert metadata["top_row_layout"] == {
-        "attention_input_projection_x": 420,
-        "attention_input_projection_group_bounds": [405, 30, 200, 650],
+        "token_embedding": {"x": 20, "y": 40},
+        "position_embedding": {"x": 20, "y": 210},
+        "embedding_addition": {"center_x": 195, "center_y": 170},
+        "attention_input_projection_x": 230,
+        "attention_input_projection_group_bounds": [215, 30, 200, 650],
+        "causal_attention": {
+            "bounds": [430, 98, 220, 140],
+            "display_lines": ["Causal attention", "masked QK^T / √dₕ", "softmax × V", "concat heads"],
+        },
         "attention_output_projection_x": 675,
         "attention_output_projection_label": "Attention output projection",
         "attention_output_projection_display_lines": ["Attention output", "projection"],
@@ -36,8 +44,21 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
         "router_x": 995,
         "final_output_x": 1205,
         "final_output_return_x": 1285,
-        "post_position_arrow": {"start_x": 375, "end_x": 404},
-        "attention_input_to_output_arrow": {"start_x": 625, "end_x": 655},
+        "input_to_causal_attention_arrow": {"start_x": 415, "end_x": 430, "y": 140},
+        "causal_attention_to_output_arrow": {"start_x": 650, "end_x": 675, "y": 168},
+    }
+    assert metadata["vocabulary_layout"] == {
+        "title": "Vocabulary",
+        "x": 20,
+        "y": 660,
+        "columns": 4,
+        "rows": [
+            ["00 PAD", "01 BOS", "02 EOS", "03 INVALID"],
+            ["04 A", "05 B", "06 C"],
+            ["07 D", "08 E", "09 F"],
+            ["10 G", "11 H", "12 I"],
+        ],
+        "near": "execution-contract panel",
     }
     assert metadata["attention_input_projection"] == {
         "group_label": "Attention input projections",
