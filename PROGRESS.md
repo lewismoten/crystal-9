@@ -414,12 +414,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - `release-manifest.json` records the source checkpoint and immutable acceptance report; `SHA256SUMS` covers the staged artifact, runtime, design, README, and manifest. The staged runtime loads successfully and independently exhaustively evaluates at **0 / 294,778** legal-policy misses.
 - Decision: **blocked** on the declared publication blockers—approved hosted target and external upload approval. No training process is active and no additional ordered parameter or representation stage is authorized.
 
-## Active INT2 baseline preflight
+## INT2 direct-materialization status
 
-`full-parameter-int2-per-tensor-direct-materialization-preflight`
+`mixed-int2-rowwise-suffix-direct-materialization`
 
 - INT2 is a new derivation from immutable `artifacts-fp32.pt`; accepted F32, INT4, and INT3 artifacts remain immutable predecessors and are not modified by this work.
-- Running direct fake-QAT/materialized evaluation with symmetric per-tensor INT2 quantization over all legal histories, with zero trainable tensors. Its purpose is a baseline only, not an acceptance claim or QAT run.
-- Running artifact directory: `artifacts/int2-full-direct-materialization-preflight-20260924/`. The exact acceptance condition for every later INT2 stage remains matching **0 / 294,778** fake-QAT and materialized-policy misses.
-- Next decision after this report: establish a minimal parity-tested scoped INT2 suffix representation, then preflight it before any isolated QAT.
+- The independently parity-tested rowwise suffix scope (`experts.*.0.weight`, `experts.*.2.weight`, `output.weight`) was directly materialized from F32 with zero trainable tensors. It uses 2-bit row groups of 32 values and 589 FP32 scales; it is a staged representation only, with no packed runtime or release integrity gate.
+- Exhaustive preflight: fake-QAT **98,739 / 294,778** misses; materialized **98,739 / 294,778** misses. Matching totals establish path parity, not correctness, so the candidate is rejected and must not enter QAT.
+- Decision: **change strategy**. Preserve this rejected candidate and establish a different, independently parity-tested INT2 representation/granularity from immutable F32 before considering any isolated QAT.
 

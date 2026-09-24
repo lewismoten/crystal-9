@@ -1996,6 +1996,61 @@ def run_mixed_int3_attention_q_k_group2_v_group2_out_group2_qat(
     return report
 
 
+def run_mixed_int2_suffix_direct_preflight(
+    source_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    histories: list[str] | None = None,
+    device: torch.device | None = None,
+) -> dict:
+    """Exhaustively compare the rowwise-INT2 suffix fake and materialized paths."""
+    from crystal9 import materialize_mixed_int2_suffix
+
+    root = Path(__file__).parent
+    output = Path(output_dir) if output_dir else root / "artifacts/int2-rowwise-suffix-direct-materialization-preflight"
+    output.mkdir(parents=True, exist_ok=True)
+    tokenizer = GameTokenizer.from_design_file(root / "design.json")
+    device = device or torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    source = Path(source_path) if source_path else root / "artifacts-fp32.pt"
+    histories = histories or [history for history in legal_histories() if optimal_move(history) != "!"]
+    model = load_reference_model(source, tokenizer.vocab_size, device).eval()
+    materialized = materialize_mixed_int2_suffix(model).eval()
+    fake_misses = materialized_misses = 0
+    with torch.no_grad():
+        for start in range(0, len(histories), 4096):
+            batch = histories[start : start + 4096]
+            inputs = torch.tensor([padded(tokenizer, history) for history in batch], device=device)
+            fake = model.forward_mixed_int2_suffix(inputs).argmax(dim=-1).tolist()
+            actual = materialized(inputs).argmax(dim=-1).tolist()
+            fake_misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(fake, batch))
+            materialized_misses += sum(tokenizer.decode_id(token_id) != optimal_move(history) for token_id, history in zip(actual, batch))
+    scale_count = sum(expert[0].weight.shape[0] + expert[2].weight.shape[0] for expert in model.experts) + model.output.weight.shape[0]
+    report = {
+        "layout": "mixed-int2-rowwise-suffix-direct-materialization",
+        "source_checkpoint": str(source),
+        "source_checkpoint_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "trainable_tensors": [],
+        "seed": None,
+        "learning_rate": None,
+        "epochs": 0,
+        "quantization": {
+            "scope": ["experts.*.0.weight", "experts.*.2.weight", "output.weight"],
+            "bits": 2,
+            "group_size": model.experts[0][0].weight.shape[1],
+            "scale_type": "float32",
+            "scale_count": scale_count,
+            "storage_efficient": True,
+            "representation": "rowwise staged candidate; no packed runtime or release integrity gate",
+        },
+        "acceptance": {
+            "legal_histories": len(histories),
+            "fake_qat_policy_misses": fake_misses,
+            "materialized_policy_misses": materialized_misses,
+        },
+    }
+    (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
+
+
 def run(epochs: int = 400, batch_size: int = 1024) -> dict:
     root = Path(__file__).parent
     tokenizer = GameTokenizer.from_design_file(root / "design.json")
