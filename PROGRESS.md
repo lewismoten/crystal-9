@@ -223,3 +223,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Isolated 200-epoch K-only QAT, seed `20260950`, learning rate `0.0001`, regressed to matching `2,950 / 294,778` misses.
 - This is rejected evidence, not an accepted stage. Do not continue this rowwise recipe; the next K attempt must change quantization granularity.
 
+## Active INT3 attention K four-value-group candidate
+
+`mixed-int3-scalar-input-attention-q-k-group4`
+
+- Scope: accepted INT3 scope 8 plus only K rows (`attention.in_proj_weight[32:64]`) in contiguous four-value INT3 groups per row. Q remains in its accepted rowwise INT3 state; V and every other predecessor tensor are frozen.
+- The new fake-QAT/materialized parity test was red for the absent Q+K-group4 runner, then passes after its minimal implementation: `tests/test_mixed_int3_attention_q_k_group4_parity.py`. The isolated-runner test asserts exact Q/V and all non-projection predecessor tensor identity; its optimizer uses zero weight decay so gradient-masked Q/V slices cannot drift.
+- Direct materialization from the accepted Q checkpoint produced matching `614 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group4-direct-materialization/report.json`). The group layout has 1,024 FP32 scales for K and is a staged representation, not a packed INT3 release.
+- Active recipe: isolated 200-epoch QAT, seed `20260951`, learning rate `0.0001`, batch size `1024`, with only K rows trainable. Acceptance remains matching exactly `0 / 294,778` misses.
+
