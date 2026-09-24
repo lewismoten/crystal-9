@@ -31,7 +31,7 @@ def main() -> None:
             "tensor_count": metadata["tensor_count"], "width": metadata["width"], "height": metadata["height"],
             "normalization": metadata["normalization"], "derived": True,
         })
-    (OUTPUT.parent / "inspectors.json").write_text(json.dumps({"format": "crystal-9-tensor-inspector-v8", "inspectors": inspectors}, indent=2) + "\n")
+    (OUTPUT.parent / "inspectors.json").write_text(json.dumps({"format": "crystal-9-tensor-inspector-v9", "inspectors": inspectors}, indent=2) + "\n")
 
 
 if __name__ == "__main__":

@@ -189,6 +189,9 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "Output projection", 630, top_y)
     _render_pair(rgb, width, state, "norm.weight", "norm.bias", "Norm", 850, top_y)
     _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 950, top_y)
+    # The Final output outer boundary gives the return path a truthful destination without drawing through a tensor grid.
+    final_panel_left, final_panel_top, final_panel_right, final_panel_bottom = 1148, 88, 1280, 188
+    _rectangle(rgb, width, final_panel_left, final_panel_top, final_panel_right - final_panel_left, final_panel_bottom - final_panel_top, _EXPERT_BORDER, 1)
     _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1160, top_y)
     _render_vocabulary(rgb, width, 20, 230)
 
@@ -197,10 +200,11 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _arrow(rgb, width, 825, flow_y, 845, flow_y)
     _arrow(rgb, width, 925, flow_y, 945, flow_y)
 
-    expert_y, expert_gap, expert_width = 720, 16, 200
-    router_center, router_bus_y = 1030, expert_y - 34
-    expert_left, expert_right = 12, 1942
-    expert_top, expert_bottom = expert_y - 42, 1270
+    # Keep the nine repeated modules close enough to compare, while retaining a clear inter-layer arrow gutter.
+    expert_y, expert_gap, expert_width = 720, 20, 114
+    router_center = 1030
+    expert_left, expert_right = 420, 1630
+    expert_top, expert_bottom = expert_y - 42, 1128
     _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _EXPERT_BORDER)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
     _arrow(rgb, width, router_center, 205, router_center, expert_top - 1)
@@ -210,21 +214,22 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _centered_text(rgb, width, router_center, 412, "Selected:", _LABEL)
     _centered_text(rgb, width, router_center, 440, "2 experts", _LABEL)
     for expert in range(9):
-        x = _MARGIN + expert * (expert_width + expert_gap)
-        box_top, box_bottom = expert_y + 8, expert_y + 520
-        _rectangle(rgb, width, x - 8, box_top, 186, box_bottom - box_top, _EXPERT_BORDER, 1)
-        _centered_text(rgb, width, x + 82, box_top + 8, f"Expert {expert + 1}", _LABEL)
+        x = 440 + expert * (expert_width + expert_gap)
+        box_top, box_bottom = expert_y + 8, expert_y + 382
+        _rectangle(rgb, width, x - 6, box_top, 114, box_bottom - box_top, _EXPERT_BORDER, 1)
+        _centered_text(rgb, width, x + 51, box_top + 8, f"Expert {expert + 1}", _LABEL)
         _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, expert_y + 48)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 298)
-        _arrow(rgb, width, x + 92, expert_y + 260, x + 92, expert_y + 338)
-    # The output panel shares the router's top-row alignment; this return arrow is parallel to router-to-experts.
-    output_center = 1242
-    _arrow(rgb, width, output_center, expert_top - 8, output_center, 135)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 230)
+        _arrow(rgb, width, x + 51, expert_y + 184, x + 51, expert_y + 222)
+    # Return in a dedicated outer lane, then enter the Final output panel boundary rather than its matrix.
+    output_return_x, output_return_y = 1325, 160
+    _line(rgb, width, output_return_x, expert_top - 8, output_return_x, output_return_y)
+    _arrow(rgb, width, output_return_x, output_return_y, final_panel_right, output_return_y)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v8", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v9", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v8",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v9",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "nine Expert boxes, each containing its first and second layer",
@@ -232,8 +237,8 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         "vocabulary": _VOCABULARY, "font": "DejaVu Sans", "router_selection_label": "Selected: 2 experts",
         "router_selection_lines": ["Selected:", "2 experts"], "router_selection_shape": "gray outlined rectangle",
         "router_path": "continuous downward arrow touching the Experts outline",
-        "expert_return_path": "vertical upward arrow, parallel to router-to-experts, ending below Final output",
-        "intra_expert_arrows": "clear gap between first and second layer matrices",
+        "expert_return_path": "dedicated outer lane enters the Final output panel boundary",
+        "intra_expert_arrows": "compact clear gap between first and second layer matrices",
         "border_legend": {"dim purple": "weight matrix", "dim cyan": "bias vector"}, "experts_outline": "slate gray",
         "tensors": inventory, "width": width, "height": height,
     }
