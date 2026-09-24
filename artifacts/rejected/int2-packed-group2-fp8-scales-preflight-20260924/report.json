@@ -1,0 +1,23 @@
+{
+  "layout": "complete-int2-two-value-shared-fp8-scales-research",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "artifacts/rejected/int2-packed-group2-fp8-scales-preflight-20260924/crystal-9-int2-packed-group2-fp8-scales.pt",
+  "artifact_bytes": 50307,
+  "artifact_sha256": "321b02cd62cb33ddb1fc8ac1b61671fe3e976346c93ea5d5a61bb060c49ac7fc",
+  "integrity_sha256": "5a262ac501d1502136b880ee734730ba2607c93538738a7223748c3c38fc681e",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit codes packed low-bit-first",
+    "group_size": 2,
+    "scale_type": "float8_e4m3fn",
+    "scale_count": 12364,
+    "storage_efficient": false,
+    "representation": "distinct shared-scale hierarchy-quantization research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 28833
+  },
+  "decision": "rejected"
+}

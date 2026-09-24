@@ -604,3 +604,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales.pt` (`64,525` bytes; SHA-256 `0908e9953a434f0ab5d78df8f6dbc8d4c5eb1c24db7e9e013bd7bb5105768235`; manifest integrity SHA-256 `d438aca4987c0b2efd6b71e6776c42d919e4a8fd1caaa5a545490860aedd9d26`).
 - This is a parity-validated hierarchy-quantization research candidate, not a compact or deployable INT2 release: it still retains one scale per scalar and has no release-manifest or distribution integrity gate.
 - Decision: **change strategy**. Lower scalar-scale precision is now exhausted for this FP8 type; any further compression must be a distinct parity-tested shared/hierarchical scale-layout candidate. No training process is active.
+
+## Rejected packed INT2 two-value shared-scale candidate
+
+`complete-int2-two-value-shared-fp8-scales-research`
+
+- A distinct hierarchy candidate quantized the immutable F32 source into low-bit-first INT2 codes with one shared `float8_e4m3fn` scale for each contiguous two-value group. It has `12,364` scales rather than the scalar proof's `24,726`; accepted F32, INT4, INT3, scalar INT2 proof, FP16-scale, and scalar-FP8-scale artifacts remain unchanged.
+- TDD evidence: `tests/test_packed_int2_group2_scales.py` first failed because the group-2 runtime/export module was absent, then passed after the minimal runtime implementation. Targeted packed-INT2 tests pass and the full suite passes: **152 passed**.
+- The packed artifact's payload integrity gate rejects a one-bit packed-payload flip. Exhaustive independent runtime evaluation failed the exact policy gate with **28,833 / 294,778** legal-policy misses. Immutable rejected report: `artifacts/rejected/int2-packed-group2-fp8-scales-preflight-20260924/report.json`.
+- Rejected artifact: `artifacts/rejected/int2-packed-group2-fp8-scales-preflight-20260924/crystal-9-int2-packed-group2-fp8-scales.pt` (`50,307` bytes; SHA-256 `321b02cd62cb33ddb1fc8ac1b61671fe3e976346c93ea5d5a61bb060c49ac7fc`; manifest integrity SHA-256 `5a262ac501d1502136b880ee734730ba2607c93538738a7223748c3c38fc681e`). It is not a release or accepted representation.
+- Decision: **change strategy**. Do not train or extend this direct-materialization representation. A future scale-compression candidate must alter the hierarchy design and independently establish parity before exhaustive evaluation; no model process is active.
