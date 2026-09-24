@@ -200,11 +200,11 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _arrow(rgb, width, 825, flow_y, 845, flow_y)
     _arrow(rgb, width, 925, flow_y, 945, flow_y)
 
-    # Keep the nine repeated modules close enough to compare, while retaining a clear inter-layer arrow gutter.
-    expert_y, expert_gap, expert_width = 720, 20, 114
+    # Begin directly under Output projection and give each expert enough breathing room around its paired matrices.
+    expert_y, expert_gap, expert_width = 720, 12, 140
     router_center = 1030
-    expert_left, expert_right = 420, 1630
-    expert_top, expert_bottom = expert_y - 42, 1128
+    expert_left, expert_right = 630, 2020
+    expert_top, expert_bottom = expert_y - 42, 1235
     _rectangle(rgb, width, expert_left, expert_top, expert_right - expert_left, expert_bottom - expert_top, _EXPERT_BORDER)
     _text(rgb, width, expert_left + 16, expert_top + 12, "Experts", _LABEL)
     _arrow(rgb, width, router_center, 205, router_center, expert_top - 1)
@@ -214,22 +214,22 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _centered_text(rgb, width, router_center, 412, "Selected:", _LABEL)
     _centered_text(rgb, width, router_center, 440, "2 experts", _LABEL)
     for expert in range(9):
-        x = 440 + expert * (expert_width + expert_gap)
-        box_top, box_bottom = expert_y + 8, expert_y + 382
-        _rectangle(rgb, width, x - 6, box_top, 114, box_bottom - box_top, _EXPERT_BORDER, 1)
+        x = 650 + expert * (expert_width + expert_gap)
+        box_top, box_bottom = expert_y + 8, expert_y + 490
+        _rectangle(rgb, width, x - 10, box_top, 124, box_bottom - box_top, _EXPERT_BORDER, 1)
         _centered_text(rgb, width, x + 51, box_top + 8, f"Expert {expert + 1}", _LABEL)
         _render_pair(rgb, width, state, f"experts.{expert}.0.weight", f"experts.{expert}.0.bias", "", x, expert_y + 48)
-        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 230)
-        _arrow(rgb, width, x + 51, expert_y + 184, x + 51, expert_y + 222)
+        _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, expert_y + 255)
+        _arrow(rgb, width, x + 51, expert_y + 265, x + 51, expert_y + 293)
     # Return in a dedicated outer lane, then enter the Final output panel boundary rather than its matrix.
     output_return_x, output_return_y = 1325, 160
-    _line(rgb, width, output_return_x, expert_top - 8, output_return_x, output_return_y)
+    _line(rgb, width, output_return_x, expert_top, output_return_x, output_return_y)
     _arrow(rgb, width, output_return_x, output_return_y, final_panel_right, output_return_y)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v9", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v11", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v9",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v11",
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "nine Expert boxes, each containing its first and second layer",

@@ -15,7 +15,7 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v9"
+    assert metadata["layout"] == "architecture-flow-v11"
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"
