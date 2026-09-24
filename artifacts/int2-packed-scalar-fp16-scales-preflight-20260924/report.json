@@ -1,0 +1,23 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp16-scales",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "format": "crystal-9-packed-int2-v1",
+  "artifact": "artifacts/int2-packed-scalar-fp16-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp16-scales.pt",
+  "artifact_bytes": 87657,
+  "artifact_sha256": "916f9b8ff9ee2d6a02c920987df1e21f82a4ce01dc64c9d83c914bf9ea5f8f1a",
+  "integrity_sha256": "f4619917528d92faf7393a564728be9e70dcc56cece9cea1a37b59e28c0524ec",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first",
+    "scale_type": "float16",
+    "scale_count": 24726,
+    "storage_efficient": false,
+    "representation": "hierarchy-quantization research candidate; scalar scales compressed to float16"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}

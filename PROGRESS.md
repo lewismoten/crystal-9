@@ -582,3 +582,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Exhaustive direct-materialization gate passed: **0 / 294,778** fake-QAT misses and **0 / 294,778** independently materialized-runtime misses. Immutable report: `artifacts/int2-scalar-suffix-output-bias-router-weight-bias-expert-biases-position-embedding-attention-q-group1-k-group1-v-group1-out-group1-in-bias-group1-out-bias-group1-norm-weight-group1-norm-bias-group1-direct-materialization/report.json`.
 - This first behaviorally exact full-parameter INT2 proof has 24,726 FP32 scalar scales. It is **not storage-efficient**, packed, or a deployable INT2 release.
 - Decision: **change strategy**. Behavioral feasibility is proven. Any scale compression or packed-runtime work must be a distinct hierarchy-quantization candidate with its own red-to-green parity, packing, runtime, and integrity gates; this accepted proof remains immutable.
+
+## Accepted packed scalar INT2 scale-compression candidate
+
+`complete-scalar-group-int2-packed-fp16-scales`
+
+- The immutable full scalar-group INT2 proof was independently exported as genuine low-bit-first packed INT2 codes, with all 24,726 scalar dequantization scales stored as FP16. The F32 source remains authoritative; accepted F32, INT4, INT3, and the FP32-scale INT2 research artifact are unchanged.
+- TDD evidence: `tests/test_packed_int2_runtime.py` was red for the absent packed runtime, then green; `tests/test_packed_int2_fp16_scales.py` was red for the absent scale-dtype API, then green. Full suite: **149 passed**.
+- Independent packed runtime exhaustive gate passed: **0 / 294,778** legal-policy misses. Immutable report: `artifacts/int2-packed-scalar-fp16-scales-preflight-20260924/report.json`.
+- Artifact: `artifacts/int2-packed-scalar-fp16-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp16-scales.pt` (`87,657` bytes; SHA-256 `916f9b8ff9ee2d6a02c920987df1e21f82a4ce01dc64c9d83c914bf9ea5f8f1a`; manifest integrity SHA-256 `f4619917528d92faf7393a564728be9e70dcc56cece9cea1a37b59e28c0524ec`).
+- This is a parity-validated hierarchy-quantization research candidate, not a claimed compact or deployable INT2 release: it retains one scale per scalar and has no release-manifest or distribution integrity gate.
+- Decision: **advance**. The next bounded representation candidate is a separately parity-tested lower-precision scale encoding; it must preserve this artifact and pass its own exhaustive packed-runtime and integrity gates.
