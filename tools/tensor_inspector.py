@@ -153,7 +153,12 @@ def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], wei
     weight_columns = _shape(state[weight])[1]
     total_width = weight_columns * _CELL + _CELL * 2
     if label:
-        _centered_text(rgb, width, x + total_width // 2, y + 20, label, _LABEL)
+        label_lines = label.split("\n")
+        if len(label_lines) == 1:
+            _centered_text(rgb, width, x + total_width // 2, y + 20, label, _LABEL)
+        else:
+            for index, line in enumerate(label_lines):
+                _centered_text(rgb, width, x + total_width // 2, y + 2 + index * 22, line, _LABEL)
     grid_y = y + _HEADER_HEIGHT
     weight_width, weight_height = _render_tensor(rgb, width, state[weight], x, grid_y)
     bias_x = x + weight_width + _CELL
@@ -163,7 +168,7 @@ def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], wei
 
 def _render_attention_input_projections(rgb: bytearray, width: int, state: dict[str, torch.Tensor], x: int, y: int) -> None:
     """Render PyTorch's packed Q/K/V input projection as three logical pairs."""
-    group_x, group_y, group_width, group_height = x - 15, y, 210, 650
+    group_x, group_y, group_width, group_height = x - 15, y, 200, 650
     _rectangle(rgb, width, group_x, group_y, group_width, group_height, _EXPERT_BORDER, 1)
     _centered_text(rgb, width, group_x + group_width // 2, group_y + 10, "Attention input", _LABEL)
     _centered_text(rgb, width, group_x + group_width // 2, group_y + 32, "projections", _LABEL)
@@ -198,8 +203,8 @@ def _render_execution_contract(rgb: bytearray, width: int, x: int, y: int) -> No
     panel_width, panel_height = 570, 470
     _rectangle(rgb, width, x, y, panel_width, panel_height, _EXPERT_BORDER, 1)
     lines = (
-        ("Decoded inspector — not reconstructable", _LABEL),
         ("Proposed release: lewismoten/crystal-9:q4", _FLOW),
+        ("Decoded inspector — not reconstructable", _LABEL),
         ("", _LABEL),
         ("INPUT / SEQUENCE", _LABEL),
         ("Public input: a-i; maximum 8 moves", _MUTED),
@@ -234,21 +239,21 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     top_y, flow_y = 40, 110
     _render_single(rgb, width, state, "embedding.weight", "Token embedding", 20, top_y)
     _render_single(rgb, width, state, "position.weight", "Position embedding", 210, top_y)
-    _render_attention_input_projections(rgb, width, state, 400, 30)
-    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "Output projection", 630, top_y)
-    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "Norm", 850, top_y)
-    _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 950, top_y)
-    _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1160, top_y)
+    _render_attention_input_projections(rgb, width, state, 420, 30)
+    _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "Attention output\nprojection", 675, top_y)
+    _render_pair(rgb, width, state, "norm.weight", "norm.bias", "Norm", 895, top_y)
+    _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 995, top_y)
+    _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1205, top_y)
     _render_vocabulary(rgb, width, 20, 170)
     _render_execution_contract(rgb, width, 20, 750)
 
     # Token and position embeddings are combined elementwise before attention.
     _line(rgb, width, 190, flow_y, 205, flow_y)
     _line(rgb, width, 198, flow_y - 8, 198, flow_y + 8)
-    _arrow(rgb, width, 375, flow_y, 384, flow_y)
-    _arrow(rgb, width, 600, flow_y, 625, flow_y)
-    _arrow(rgb, width, 815, flow_y, 835, flow_y)
-    _arrow(rgb, width, 898, flow_y, 918, flow_y)
+    _arrow(rgb, width, 375, flow_y, 404, flow_y)
+    _arrow(rgb, width, 625, flow_y, 655, flow_y)
+    _arrow(rgb, width, 860, flow_y, 890, flow_y)
+    _arrow(rgb, width, 943, flow_y, 963, flow_y)
 
     # Begin below Output projection, then use a 5+4 grid so every expert can contain its full weight+bias pair.
     expert_y, expert_gap, expert_width = 340, 10, 180
@@ -274,7 +279,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _render_pair(rgb, width, state, f"experts.{expert}.2.weight", f"experts.{expert}.2.bias", "", x, row_y + 209)
         _arrow(rgb, width, x + 80, row_y + 219, x + 80, row_y + 247)
     # The return uses a straight reserved lane and terminates immediately below the Final output weight matrix.
-    output_return_x, output_matrix_bottom = 1240, 153
+    output_return_x, output_matrix_bottom = 1285, 153
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
     # Top-right legend uses unused canvas space, leaving the full lower-left lane for the execution contract.
@@ -295,7 +300,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v23", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v27", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -307,8 +312,29 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v23",
-        "legend_location": "top-right", "execution_contract_panel": {"location": "bottom-left", "bounds": [20, 750, 570, 470]},
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v27",
+        "legend_location": "top-right",
+        "execution_contract_panel": {
+            "location": "bottom-left",
+            "bounds": [20, 750, 570, 470],
+            "header_lines": [
+                "Proposed release: lewismoten/crystal-9:q4",
+                "Decoded inspector — not reconstructable",
+            ],
+        },
+        "top_row_layout": {
+            "attention_input_projection_x": 420,
+            "attention_input_projection_group_bounds": [405, 30, 200, 650],
+            "attention_output_projection_x": 675,
+            "attention_output_projection_label": "Attention output projection",
+            "attention_output_projection_display_lines": ["Attention output", "projection"],
+            "norm_x": 895,
+            "router_x": 995,
+            "final_output_x": 1205,
+            "final_output_return_x": 1285,
+            "post_position_arrow": {"start_x": 375, "end_x": 404},
+            "attention_input_to_output_arrow": {"start_x": 625, "end_x": 655},
+        },
         "attention_input_projection": {
             "group_label": "Attention input projections", "packed_weight_shape": [96, 32],
             "segments": {

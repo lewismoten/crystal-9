@@ -15,10 +15,30 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v23"
+    assert metadata["layout"] == "architecture-flow-v27"
     assert metadata["width"] == 1640
     assert metadata["legend_location"] == "top-right"
-    assert metadata["execution_contract_panel"] == {"location": "bottom-left", "bounds": [20, 750, 570, 470]}
+    assert metadata["execution_contract_panel"] == {
+        "location": "bottom-left",
+        "bounds": [20, 750, 570, 470],
+        "header_lines": [
+            "Proposed release: lewismoten/crystal-9:q4",
+            "Decoded inspector — not reconstructable",
+        ],
+    }
+    assert metadata["top_row_layout"] == {
+        "attention_input_projection_x": 420,
+        "attention_input_projection_group_bounds": [405, 30, 200, 650],
+        "attention_output_projection_x": 675,
+        "attention_output_projection_label": "Attention output projection",
+        "attention_output_projection_display_lines": ["Attention output", "projection"],
+        "norm_x": 895,
+        "router_x": 995,
+        "final_output_x": 1205,
+        "final_output_return_x": 1285,
+        "post_position_arrow": {"start_x": 375, "end_x": 404},
+        "attention_input_to_output_arrow": {"start_x": 625, "end_x": 655},
+    }
     assert metadata["attention_input_projection"] == {
         "group_label": "Attention input projections",
         "packed_weight_shape": [96, 32],

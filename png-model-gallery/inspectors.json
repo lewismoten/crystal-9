@@ -1,11 +1,11 @@
 {
-  "format": "crystal-9-tensor-inspector-v23",
+  "format": "crystal-9-tensor-inspector-v27",
   "inspectors": [
     {
       "id": "fp32-reference",
       "name": "Immutable FP32 reference",
       "png": "inspectors/fp32-reference-tensors.png",
-      "png_bytes": 180335,
+      "png_bytes": 180375,
       "source": "artifacts-fp32.pt",
       "source_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
       "tensor_count": 48,
@@ -18,7 +18,7 @@
       "id": "int4-full-qat",
       "name": "Full-parameter INT4 QAT checkpoint",
       "png": "inspectors/int4-full-qat-tensors.png",
-      "png_bytes": 180501,
+      "png_bytes": 180522,
       "source": "artifacts/mixed-int4-full-parameters-norm-weight-group2-seed20260934-300-lr5e-5/artifacts-qat-mixed-int4-full-parameters-norm-weight-group2.pt",
       "source_sha256": "7b66fa68515d2f06c3616f35e65c3fa89eb15317175b3f674809c426499a3333",
       "tensor_count": 48,
@@ -31,7 +31,7 @@
       "id": "int3-suffix-qat",
       "name": "Scoped INT3 suffix QAT checkpoint",
       "png": "inspectors/int3-suffix-qat-tensors.png",
-      "png_bytes": 180643,
+      "png_bytes": 180562,
       "source": "artifacts/int3-suffix-qat-300-continuation-seed20260936-lr5e-5/artifacts-qat-mixed-int3-suffix.pt",
       "source_sha256": "050dbfb1eedcd2973a68a1439357ac6ed58c39945e0049864c05cb509ed300f0",
       "tensor_count": 48,
