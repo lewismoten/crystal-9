@@ -232,3 +232,19 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Direct materialization from the accepted Q checkpoint produced matching `614 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group4-direct-materialization/report.json`). The group layout has 1,024 FP32 scales for K and is a staged representation, not a packed INT3 release.
 - Active recipe: isolated 200-epoch QAT, seed `20260951`, learning rate `0.0001`, batch size `1024`, with only K rows trainable. Acceptance remains matching exactly `0 / 294,778` misses.
 
+## Rejected INT3 attention K four-value-group candidate
+
+`mixed-int3-scalar-input-attention-q-k-group4`
+
+- The isolated K-only QAT completed at seed `20260951`, learning rate `0.0001`, 200 epochs with matching `72 / 294,778` fake-QAT/materialized-policy misses. This improves on its `614`-miss direct baseline but is not near the exact gate and is immutable rejected evidence; do not continue it.
+- Provenance and frozen Q/V/predecessor SHA-256 inventory: `artifacts/int3-scalar-input-attention-q-k-group4-qat-200-seed20260951-lr1e-4/report.json`.
+
+## Active INT3 attention K two-value-group candidate
+
+`mixed-int3-scalar-input-attention-q-k-group2`
+
+- Strategy change: only K granularity changes from rejected group4 to independent contiguous two-value INT3 groups per row; accepted Q rows remain rowwise INT3 and V/every other predecessor tensor remain frozen.
+- The new fake-QAT/materialized parity test was observed red before implementation and is now green: `tests/test_mixed_int3_attention_q_k_group2_parity.py`. The isolated runner test asserts Q/V and all non-projection predecessor tensors remain exactly unchanged; AdamW uses zero weight decay while Q/V gradients are masked.
+- Exhaustive direct materialization from accepted scope 8 produced matching `28 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-direct-materialization/report.json`), so QAT is required. K has 512 FP32 scales in this group-2 staged representation; it is not a packed INT3 release.
+- Active recipe: isolated 200-epoch QAT, seed `20260952`, learning rate `0.0001`, batch size `1024`, only K rows trainable. Acceptance remains matching exactly `0 / 294,778` misses.
+
