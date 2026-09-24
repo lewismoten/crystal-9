@@ -138,12 +138,39 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Direct materialization missed `2,985 / 294,778`; isolated 200-epoch QAT trained only `embedding.weight` and `position.weight` at seed `20260946`, learning rate `0.0001`, reducing matching fake-QAT/materialized misses to `835 / 294,778`.
 - This is a material improvement but not near the exact gate. The immutable checkpoint and report remain rejected evidence; it will not be extended or exported.
 
-## Active INT3 two-value-groupwise-input candidate
+## Rejected INT3 two-value-groupwise-input candidate
 
 `mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group2`
 
-- Scope: accepted INT3 scope 5 plus `embedding.weight` and `position.weight` as independent contiguous two-value INT3 groups per row. This changes only the input-table quantization granularity from the rejected group4 candidate.
-- Source: accepted scope-5 checkpoint `artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-qat-200-seed20260945-lr1e-4/artifacts-qat-mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases.pt`; all predecessor tensors except the two named input tables are SHA-256 asserted frozen.
-- The new fake-QAT/materialization parity test was red before implementation and passes. Exhaustive direct materialization missed `862 / 294,778` in both paths (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-input-group2-direct-materialization-report.json`), so isolated QAT is required.
-- Active recipe: 200 epochs, seed `20260947`, learning rate `0.0001`, batch size `1024`; only the two input tables are trainable. Acceptance remains exactly `0 / 294,778` in both paths.
+- Direct materialization missed `862 / 294,778`; isolated 200-epoch QAT trained only `embedding.weight` and `position.weight` at seed `20260947`, learning rate `0.0001`, reducing matching fake-QAT/materialized misses to `121 / 294,778`.
+- This is a material improvement over group4 but is not near the exact gate. The immutable checkpoint and report remain rejected evidence; this combined-table recipe will not be extended.
+
+## Rejected INT3 position-table direct-materialization preflight
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group2`
+
+- Scope: accepted INT3 scope 5 plus only `position.weight` as independent contiguous two-value INT3 groups per row; `embedding.weight` remains F32.
+- Direct materialization from the accepted scope-5 checkpoint produced matching fake-QAT/materialized totals of `114 / 294,778` (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group2-direct-materialization-report.json`). It is rejected as direct materialization and requires a distinct isolated QAT attempt.
+
+## Rejected INT3 position-table group2 QAT candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-group2`
+
+- Strategy change: isolate only `position.weight` with two-value INT3 groups, rather than extending the rejected combined-table candidate. `embedding.weight` and all accepted predecessor tensors are SHA-256 asserted frozen.
+- Parity test `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_group2_parity.py` was red before implementation and passes. The isolated runner test verifies `position.weight` is the sole trainable tensor.
+- Initial isolated QAT: 200 epochs, seed `20260948`, learning rate `0.0001`, batch size `1024`, reached matching fake-QAT/materialized `4 / 294,778` misses.
+- One controlled continuation from that checkpoint changed only learning rate to `0.00005` for 100 epochs (same seed); it regressed to matching `6 / 294,778` misses. Both immutable artifacts are rejected. Do not extend this recipe again.
+
+## Rejected INT3 position-table rowwise direct-materialization candidate
+
+`mixed-int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-rowwise`
+
+- Distinct granularity strategy: accepted scope 5 plus only `position.weight` in rowwise INT3, with `embedding.weight` and every predecessor tensor retained F32/accepted layout.
+- The new fake-QAT/materialized parity test was observed red before implementation and now passes: `tests/test_mixed_int3_suffix_output_bias_router_weight_group4_router_bias_expert_biases_position_rowwise_parity.py`.
+- Exhaustive direct materialization from accepted scope 5 produced matching `2,511 / 294,778` misses (`artifacts/int3-suffix-output-bias-router-weight-group4-router-bias-expert-biases-position-rowwise-direct-materialization-report.json`), worse than the group2 direct preflight (`114 / 294,778`). This direct layout is rejected; no QAT has been started.
+
+## INT3 input stage status
+
+- Accepted staged scope remains scope 5: expert matrices/biases, `output.weight`, `output.bias`, `router.weight` (four-value groups), and `router.bias`; `embedding.weight`, `position.weight`, attention, and norm tensors remain F32.
+- No model/training process is active. The sole controlled continuation regressed, and the only independently parity-tested alternate granularity preflight is materially worse. A new position-table layout must be parity-tested and direct-materialized before another QAT run; no known authorized layout remains to launch without repeating rejected work.
 
