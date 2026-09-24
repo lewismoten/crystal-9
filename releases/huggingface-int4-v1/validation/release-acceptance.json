@@ -1,0 +1,57 @@
+{
+  "release_id": "crystal-9-accepted-artifacts-v1",
+  "artifacts": [
+    {
+      "id": "f32-reference-v1",
+      "path": "artifacts/artifacts-fp32.pt",
+      "format": "PyTorch F32 state_dict",
+      "bytes": 116365,
+      "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+      "runtime": "TinyMoEPolicy",
+      "acceptance": {
+        "legal_histories": 294778,
+        "policy_misses": 0
+      }
+    },
+    {
+      "id": "packed-int4-fp32-scales-v1",
+      "path": "artifacts/crystal-9-int4-group2-packed-v1.pt",
+      "format": "crystal-9-packed-int4-v1",
+      "scale_storage": "float32",
+      "bytes": 46547,
+      "sha256": "10fb96a66aafb55b1841a0b90c3a2c2a8cfa0b24a67ac02da12434a2c722b9f9",
+      "integrity_sha256": "4bb8d2a6f4c30c0b56b0cc37d6d1ba58f16fb8c144c277acf7c42b8100172151",
+      "runtime": "PackedInt4Policy",
+      "acceptance": {
+        "legal_histories": 294778,
+        "policy_misses": 0
+      },
+      "invalid_input_examples": {
+        "!": "!",
+        "aa": "!",
+        "abcdefghi": "!",
+        "adbecf": "!"
+      }
+    },
+    {
+      "id": "packed-int4-fp16-scales-v1",
+      "path": "artifacts/crystal-9-int4-group2-packed-fp16-scales-v1.pt",
+      "format": "crystal-9-packed-int4-fp16-scales-v1",
+      "scale_storage": "float16",
+      "bytes": 46299,
+      "sha256": "63eee663a143ee478308144da406873c72c05b6d5226dbb2f5e329dacb1392eb",
+      "integrity_sha256": "abedeb4a624482fe2f2809542da6de6c2a61d15b77cf3d6be5eb77b97ce6d137",
+      "runtime": "PackedInt4Policy",
+      "acceptance": {
+        "legal_histories": 294778,
+        "policy_misses": 0
+      },
+      "invalid_input_examples": {
+        "!": "!",
+        "aa": "!",
+        "abcdefghi": "!",
+        "adbecf": "!"
+      }
+    }
+  ]
+}
