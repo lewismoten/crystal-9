@@ -222,7 +222,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 950, top_y)
     _render_pair(rgb, width, state, "output.weight", "output.bias", "Final output", 1160, top_y)
     _render_vocabulary(rgb, width, 20, 170)
-    _render_execution_contract(rgb, width, 20, 500)
+    _render_execution_contract(rgb, width, 20, 750)
 
     # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
     _arrow(rgb, width, 185, flow_y, 205, flow_y)
@@ -258,25 +258,25 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     output_return_x, output_matrix_bottom = 1240, 153
     _arrow(rgb, width, output_return_x, expert_top, output_return_x, output_matrix_bottom)
 
-    # Lower-left legend keeps border and per-value color semantics visible without competing with the column headers.
-    legend_x = 20
-    _rectangle(rgb, width, legend_x, 1023, 30, 30, _WEIGHT_BORDER, 2)
-    _text(rgb, width, legend_x + 46, 1028, "Weights", _LABEL)
-    _rectangle(rgb, width, legend_x, 1058, 30, 30, _BIAS_BORDER, 2)
-    _text(rgb, width, legend_x + 46, 1063, "Bias", _LABEL)
+    # Top-right legend uses unused canvas space, leaving the full lower-left lane for the execution contract.
+    legend_x = 1750
+    _rectangle(rgb, width, legend_x, 20, 30, 30, _WEIGHT_BORDER, 2)
+    _text(rgb, width, legend_x + 46, 25, "Weights", _LABEL)
+    _rectangle(rgb, width, legend_x, 55, 30, 30, _BIAS_BORDER, 2)
+    _text(rgb, width, legend_x + 46, 60, "Bias", _LABEL)
     for y, color, label in (
-        (1093, _color(1.0), "large positive"),
-        (1120, _color(0.5), "moderate positive"),
-        (1147, (11, 16, 24), "neutral / zero"),
-        (1174, _color(-0.5), "negative"),
-        (1201, _color(-1.0), "large negative"),
+        (90, _color(1.0), "large positive"),
+        (117, _color(0.5), "moderate positive"),
+        (144, (11, 16, 24), "neutral / zero"),
+        (171, _color(-0.5), "negative"),
+        (198, _color(-1.0), "large negative"),
     ):
         _fill_rectangle(rgb, width, legend_x, y, 20, 20, color)
         _rectangle(rgb, width, legend_x, y, 20, 20, _MUTED, 1)
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v19", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v20", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -288,7 +288,8 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v19",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v20",
+        "legend_location": "top-right", "execution_contract_panel": {"location": "bottom-left", "bounds": [20, 750, 570, 470]},
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
