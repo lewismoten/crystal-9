@@ -631,6 +631,13 @@ class TinyMoEPolicy(nn.Module):
 
     def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group2(self, token_ids: torch.Tensor) -> torch.Tensor:
         """Scalar inputs, rowwise Q, and two-value-group K/V/output INT3."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 2)
+
+    def forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(self, token_ids: torch.Tensor) -> torch.Tensor:
+        """Scalar inputs, rowwise Q, group-two K/V, and scalar-group output INT3."""
+        return self._forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(token_ids, 1)
+
+    def _forward_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out(self, token_ids: torch.Tensor, output_group_size: int) -> torch.Tensor:
         positions = torch.arange(token_ids.shape[1], device=token_ids.device).unsqueeze(0)
         hidden = F.embedding(token_ids, quantize_row_groups_ste(self.embedding.weight, 3, 1), padding_idx=0)
         hidden = hidden + F.embedding(positions, quantize_row_groups_ste(self.position.weight, 3, 1))
@@ -645,7 +652,7 @@ class TinyMoEPolicy(nn.Module):
         causal = torch.triu(torch.ones(steps, steps, device=hidden.device, dtype=torch.bool), diagonal=1)
         scores = scores.masked_fill(causal, float("-inf")).masked_fill(token_ids.eq(0).view(batch, 1, 1, steps), float("-inf"))
         attended = torch.softmax(scores, dim=-1) @ value
-        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_row_groups_ste(self.attention.out_proj.weight, 3, 2), self.attention.out_proj.bias)
+        attended = F.linear(attended.transpose(1, 2).contiguous().view(batch, steps, width), quantize_row_groups_ste(self.attention.out_proj.weight, 3, output_group_size), self.attention.out_proj.bias)
         last = (token_ids.ne(0).sum(dim=1) - 1).clamp(min=0); state = self.norm(attended[torch.arange(batch, device=token_ids.device), last])
         router_weights = torch.softmax(F.linear(state, quantize_row_groups_ste(self.router.weight, 3, 4), quantize_ste(self.router.bias, 3)), dim=-1)
         top_weights, top_indices = router_weights.topk(2, dim=-1); expert_outputs = []
@@ -1080,6 +1087,14 @@ def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group2
     materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
     with torch.no_grad():
         materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 2))
+    return materialized
+
+
+def materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2_out_group1(source: TinyMoEPolicy) -> TinyMoEPolicy:
+    """Materialize scalar-input Q/K/V INT3 with scalar-group output projection."""
+    materialized = materialize_mixed_int3_scalar_input_attention_q_k_group2_v_group2(source)
+    with torch.no_grad():
+        materialized.attention.out_proj.weight.copy_(quantize_row_groups(materialized.attention.out_proj.weight, 3, 1))
     return materialized
 
 

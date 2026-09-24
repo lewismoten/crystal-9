@@ -1,0 +1,19 @@
+{
+  "layout": "mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt",
+  "trainable_tensors": [],
+  "quantization": {
+    "attention.out_proj.weight": {
+      "bits": 3,
+      "group_size": 1,
+      "scale_type": "float32",
+      "scale_count": 1024,
+      "storage_efficient": false
+    }
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "fake_qat_policy_misses": 0,
+    "materialized_policy_misses": 0
+  }
+}

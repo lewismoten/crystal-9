@@ -317,5 +317,20 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Strategy change: only `attention.out_proj.weight` granularity changes from rejected group-4 to independent contiguous two-value INT3 groups. Accepted Q/K/V and every other predecessor tensor remain frozen.
 - The parity test was observed red for the absent group-2 output layout, then green after minimal implementation: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py`. The isolated runner test asserts every tensor other than `attention.out_proj.weight` retains exact identity.
 - Exhaustive direct materialization from accepted scope 9 produced matching `32 / 294,778` fake-QAT/materialized misses (`artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group2-direct-materialization/report.json`), so QAT is required. This layout has 512 FP32 scales and is a staged representation, not a packed INT3 release.
-- Active recipe: isolated 200 epochs, seed `20260957`, learning rate `0.0001`, batch size `1024`; only `attention.out_proj.weight` is trainable, with zero optimizer weight decay and SHA-256 assertions for every frozen predecessor tensor. Acceptance remains matching exactly `0 / 294,778` misses in both paths.
+- Initial isolated QAT, seed `20260957`, learning rate `0.0001`, 200 epochs, produced matching `1 / 294,778` misses. Its single controlled continuation changed only learning rate to `0.00005` for 100 epochs and regressed to matching `3 / 294,778`; both immutable artifacts are rejected and this recipe will not be extended.
+
+## Accepted INT3 scope 10
+
+`mixed-int3-scalar-input-attention-q-k-group2-v-group2-out-group1`
+
+- Strategy change: output-projection granularity alone changed to independent scalar INT3 groups; accepted Q remains rowwise INT3, K/V remain group-2 INT3, and all predecessor tensors are unchanged.
+- The parity test was observed red for the absent group-1 layout and then passed after minimal implementation: `tests/test_mixed_int3_attention_q_k_group2_v_group2_out_group4_parity.py`.
+- Exhaustive direct materialization from the immutable scope-9 checkpoint passed with matching **0 / 294,778** fake-QAT and materialized-policy misses. No QAT ran; `attention.out_proj.weight` had zero trainable tensors.
+- Immutable preflight/report: `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-out-group1-direct-materialization/report.json` from `artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt`.
+- The output projection has 1,024 FP32 scales (one per scalar), so this is a policy-preserving staged representation, not a storage-efficient packed INT3 artifact or a full-parameter INT3 release.
+
+## INT3 stage status
+
+- Accepted staged scope is now scope 10: experts/output/router, scalar-group token and position tables, attention Q rowwise, K/V group-2, and output projection scalar-group INT3. Attention biases and norm tensors remain F32.
+- Next ordered unresolved component: preflight `attention.in_proj_bias` under this accepted attention-projection predecessor. No packed INT3 artifact may be created until every declared tensor is accepted and independent packing/runtime/integrity gates exist.
 
