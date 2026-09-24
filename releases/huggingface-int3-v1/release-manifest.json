@@ -1,0 +1,44 @@
+{
+  "release_id": "crystal-9-packed-int3-v1",
+  "release_status": "staged-not-published",
+  "architecture": {
+    "model_family": "custom Crystal-9 sparse MoE policy",
+    "vocabulary_size": 13,
+    "context_moves": 8,
+    "hidden_size": 32,
+    "routed_experts": 9,
+    "top_k": 2
+  },
+  "artifacts": [
+    {
+      "id": "packed-int3-v1",
+      "path": "artifacts/crystal-9-int3-packed-v1.pt",
+      "format": "crystal-9-packed-int3-v1",
+      "role": "complete mixed-layout INT3 packed runtime candidate",
+      "bytes": 55489,
+      "sha256": "2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc",
+      "integrity_sha256": "5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a",
+      "source_checkpoint": "artifacts/int3-scalar-input-attention-q-k-group2-v-group2-qat-200-seed20260954-lr1e-4/artifacts-qat-mixed-int3-scalar-input-attention-q-k-group2-v-group2.pt",
+      "source_report": "artifacts/int3-packed-v1-preflight-20260924-retry1/report.json",
+      "acceptance": {
+        "legal_histories": 294778,
+        "policy_misses": 0
+      }
+    }
+  ],
+  "runtime": {
+    "entrypoint": "packed_int3.PackedInt3Policy",
+    "required_files": ["crystal9.py", "packed_int3.py", "design.json"],
+    "boundaries": [
+      "This is a custom Python-runtime container, not a Transformers checkpoint, GGUF, llama.cpp, or Ollama model.",
+      "It packs signed three-bit codes low-bit-first with FP32 dequantization scales.",
+      "Scalar-group tensors retain one scale per scalar; this release candidate does not claim every scale is storage-optimal."
+    ]
+  },
+  "validation": {
+    "script": "validation/verify_release.py",
+    "report": "validation/release-acceptance.json",
+    "checksums": "SHA256SUMS"
+  },
+  "publication_blockers": ["hosted repository target and external upload approval"]
+}

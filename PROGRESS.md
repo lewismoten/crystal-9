@@ -405,3 +405,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Accepted scope 14 covers every model parameter, and packed runtime/integrity candidate `crystal-9-packed-int3-v1` now passes its independent exhaustive gate.
 - Decision: **advance** to release-manifest/provenance review. No training process is active; parameter QAT is complete and the next work is non-training release packaging verification.
 
+## Staged packed INT3 release manifest v1
+
+`crystal-9-packed-int3-v1`
+
+- Release staging: `releases/huggingface-int3-v1/`; status is `staged-not-published`, with no external upload attempted.
+- The staged artifact is an exact immutable copy of the independently accepted packed candidate: `55,489` bytes, SHA-256 `2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc`, internal manifest SHA-256 `5a27545c39fa2b327e25f8f62c4a16f4a820643cb3354ac36b4e97f2c115c58a`.
+- `release-manifest.json` records the source checkpoint and immutable acceptance report; `SHA256SUMS` covers the staged artifact, runtime, design, README, and manifest. The staged runtime loads successfully and independently exhaustively evaluates at **0 / 294,778** legal-policy misses.
+- Decision: **blocked** on the declared publication blockers—approved hosted target and external upload approval. No training process is active and no additional ordered parameter or representation stage is authorized.
+
