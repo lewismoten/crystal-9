@@ -105,6 +105,10 @@ sha256sum -c SHA256SUMS
 
 Browser projection files are separate derivative representations and are not required by this Python runtime. The tensor workflow image is a decoded visualization, not a byte container.
 
+## Acknowledgments
+
+CRYSTAL-9 was designed and directed by Lewis Moten. Its code and documentation were developed with assistance from GPT-5.6-terra Med, accessed through Hermes and using Honcho for context and project-memory support. Lewis Moten remains the project designer, maintainer, and publisher.
+
 ## License
 
 This staged package is licensed under [Apache License 2.0](LICENSE). Hosted publication still requires repository-owner approval.

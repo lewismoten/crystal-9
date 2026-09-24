@@ -16,6 +16,10 @@ FP32 is the source baseline. F16, Q6_K, Q4_K_M, Q3_K, Q2_K, and experimental 1-b
 
 The custom vocabulary is intentionally separate from the prior Ollama-compatible byte-BPE vocabulary. Crystal-9 must prove token-ID parity and target-runtime behavior before claiming Ollama compatibility. For a GGUF or standard llama.cpp/Ollama-compatible model today, use [Palace-9](https://huggingface.co/lewismoten/palace-9).
 
+## Acknowledgments
+
+CRYSTAL-9 was designed and directed by Lewis Moten. Its code and documentation were developed with assistance from GPT-5.6-terra Med, accessed through Hermes and using Honcho for context and project-memory support. Lewis Moten remains the project designer, maintainer, and publisher.
+
 ## First gate
 
 ```sh
