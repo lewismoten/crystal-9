@@ -624,3 +624,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The exhaustive independent packed runtime gate produced **52 / 294,778** legal-policy misses. Immutable rejected report: `artifacts/rejected/int2-packed-scalar-fp8-e5m2-scales-preflight-20260924/report.json`.
 - Rejected artifact: `artifacts/rejected/int2-packed-scalar-fp8-e5m2-scales-preflight-20260924/crystal-9-int2-packed-scalar-fp8-e5m2-scales.pt` (`64,321` bytes; SHA-256 `c3c60bfa2f68a12bc87d7c4ebeaa749c85c131bfc8a650cf97fcfe722883b4d7`; manifest integrity SHA-256 `e92fa1ed814f3ce79a7b502536a42ec9eb390a9a7f8ae87ab550daebe65d599e`). It is not a release or accepted representation.
 - Decision: **change strategy**. E5M2 scalar-scale precision is not exact, so do not train or extend it. No model process is active; the next hierarchy candidate must alter scale sharing or encoding and establish independent red-to-green parity before exhaustive evaluation.
+
+## Rejected packed INT2 two-value shared-FP16-scale candidate
+
+`complete-int2-two-value-shared-fp16-scales-research`
+
+- A distinct hierarchy candidate quantized immutable `artifacts-fp32.pt` into low-bit-first packed INT2 codes with one shared `float16` scale for each contiguous two-value group. It has `12,364` scales rather than the scalar proof's `24,726`; accepted F32, INT4, INT3, scalar INT2 proof, and prior FP16/FP8 candidates remain unchanged.
+- TDD evidence: `tests/test_packed_int2_group2_fp16_scales.py` failed because the FP16 group-2 module was absent, then passed after the minimal independent runtime implementation. `tests/test_packed_int2_group2_fp16_preflight.py` likewise failed for its absent runner, then passed. Full suite: **155 passed**.
+- The packed artifact integrity gate rejected a one-bit packed-payload flip. Exhaustive independent runtime evaluation failed the exact policy gate with **29,689 / 294,778** legal-policy misses. Immutable rejected report: `artifacts/rejected/int2-packed-group2-fp16-scales-preflight-20260924/report.json`.
+- Rejected artifact: `artifacts/rejected/int2-packed-group2-fp16-scales-preflight-20260924/crystal-9-int2-packed-group2-fp16-scales.pt` (`63,849` bytes; SHA-256 `bb03397f8f515613e1d0279647159dbcdec5e369594225271e5772f75b515d48`; manifest integrity SHA-256 `127c9e3ac80fdd26d7c2f012d0b7580d3f8688d7ae225ac36f05910df0855b4a`). It is not a release or accepted representation.
+- Decision: **change strategy**. FP16 precision cannot make the two-value shared-scale hierarchy exact, so do not train or extend it. No model process is active; a future hierarchy candidate must alter group scale sharing or encoding and establish independent red-to-green parity before exhaustive evaluation.
