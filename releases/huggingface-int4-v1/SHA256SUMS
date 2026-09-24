@@ -1,6 +1,6 @@
 6feaded4e28ea86e001a6751b4e3d960e8b7c31b9616ff9936b79297086e809b  ./.gitignore
 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30  ./LICENSE
-12f351fd79c05a83d0b2a951d19e05a91bc767e67381396f241fb102fdde3527  ./README.md
+61b259fd9bd075c15b789ce280f2a07374018eddf42d1afdb9c932108411dfab  ./README.md
 e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c  ./artifacts/artifacts-fp32.pt
 2bc68216b05d898f2728314bd467dc49cfd8390380e47747b2122174dc8574fc  ./artifacts/crystal-9-int3-packed-v1.pt
 63eee663a143ee478308144da406873c72c05b6d5226dbb2f5e329dacb1392eb  ./artifacts/crystal-9-int4-group2-packed-fp16-scales-v1.pt
@@ -8,14 +8,16 @@ e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c  ./artifacts/ar
 3dac3ba2f86b4e804f98918e704531fe576c9a6ae4a4076f98eb5e42f1ba9af1  ./assets/int4-full-qat-tensor-workflow.png
 0dff9a01d0e0dde8c5ac67809d1406cae4f883d5457683e57e52c58f064457bc  ./crystal9.py
 011c2afd66bef3f78478dcb02ba4f05edb4a0c03bd4e12f6cb4486808b990af1  ./design.json
-c38733dde8e1b544205b27aaa26b8a9929b3d79eee8b19a992f194c8e762010c  ./inspection/README.md
+0e36bf465091307027a13ea71ec96f6bda09149222002d3b5906468dcc85fe95  ./inspection/README.md
 2a56e945c8e041c42d0732a67e94648492f94fbcad85a35ba17333d779a2affd  ./inspection/crystal-9-f32-fixed8-inspection-validation.json
 296d71c305fa5f62925b65f5986b53377bf411d3af0188313c430be511bda246  ./inspection/crystal-9-f32-fixed8-inspection.onnx
 a68d92a34366300ffdf42791a245c40139a06b01334b67d7f38845cd3c7eaf83  ./inspection/crystal-9-f32-fixed8-inspection.onnx.data
+edb1a4471e4cfb2e46cf9e4e7707a2730e5d4727d8f97a7d165999fbd525c9be  ./inspection/crystal-9-f32-fixed8-inspection.onnx.png
+a5046db7e32056857a6e74789e83e11434e92c612596a9da9c3c6ced7c7f2f19  ./inspection/crystal-9-f32-fixed8-inspection.onnx.svg
 39fce40812127b5c4f732193068b021ed526b23f184bde3b1d64885972909a99  ./packed_int3.py
 d0d211d24291b0d4aac9c31967c21948fdca428f8ab28d7710c634660f8b33bb  ./packed_int4.py
 c8b89468ff18c10880b0fb35aaf1d8ff3d22b468901c01b3d803a31243bb2617  ./play_crystal9.py
-4e210212432917916a1f9bde2d65a7c4ba07f0f3a62c92304e94491345c448fd  ./release-manifest.json
+cc47ef0a53500dc71be6cfce8533a090eb456b9cb2b55061f1acd8fdac43dfab  ./release-manifest.json
 b36f2f2486ae678c3f0c57166517120468d911b5f254e2701246763df336939f  ./requirements.txt
 fa8d1c2cb2cd466b221e00484c6fc1ca62ff1950a475188c2688ea5559b920f0  ./validation/packed-int3-acceptance.json
 2de1dcc997d79de5bcd7d5d0f33c5de94d55b5409d4297a7ea14973fdd9ee1ca  ./validation/packed-int4-acceptance.json

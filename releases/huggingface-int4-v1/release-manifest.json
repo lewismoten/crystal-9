@@ -89,7 +89,11 @@
     "source_checkpoint": {"path": "artifacts/artifacts-fp32.pt", "sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c"},
     "input": {"name": "token_ids", "dtype": "int64", "shape": [1, 8]},
     "output": {"name": "logits", "shape": [1, 13]},
-    "validation": "inspection/crystal-9-f32-fixed8-inspection-validation.json"
+    "validation": "inspection/crystal-9-f32-fixed8-inspection-validation.json",
+    "derived_renderings": {
+      "png": {"path": "inspection/crystal-9-f32-fixed8-inspection.onnx.png", "role": "clipped indexed-color documentation preview", "generator": "Netron 9.2.9 by Lutz Roeder"},
+      "svg": {"path": "inspection/crystal-9-f32-fixed8-inspection.onnx.svg", "role": "zoomable vector documentation rendering", "generator": "Netron 9.2.9 by Lutz Roeder"}
+    }
   },
   "exclusions": {
     "full_fp16_model": "not created or accepted for Crystal-9",

@@ -75,6 +75,10 @@ This is a decoded, non-reconstructable inspection of the full-parameter INT4 QAT
 
 `inspection/crystal-9-f32-fixed8-inspection.onnx` is a derived F32 ONNX graph for [Netron](https://netron.app/). Keep its required `crystal-9-f32-fixed8-inspection.onnx.data` weight file beside it when transferring or opening it. The graph has one fixed `int64` input, `token_ids` with shape `[1, 8]`, and returns `logits` with shape `[1, 13]`. It exposes the attention, router/top-2 selection, all nine expert branches, routed merge, and output path that a packed artifact dictionary cannot show. It is inspection-only—not a Crystal-9 runtime or accepted deployment artifact. Its source binding and ONNX Runtime comparison are recorded in `inspection/crystal-9-f32-fixed8-inspection-validation.json`.
 
+![Netron rendering of the fixed-eight-token Crystal-9 F32 ONNX inspection graph](inspection/crystal-9-f32-fixed8-inspection.onnx.png)
+
+This clipped, indexed-color PNG preview is a derived rendering of that ONNX graph. The matching [SVG](inspection/crystal-9-f32-fixed8-inspection.onnx.svg) retains zoomable vector detail. Both were generated from the ONNX file with [Netron 9.2.9](https://netron.app/) by Lutz Roeder.
+
 ## Input and output contract
 
 Pass a raw history of board-square letters `a` through `i` in play order, with at most eight moves. The policy returns one square letter for a legal next move, or `!` when the history is invalid or terminal.
