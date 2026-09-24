@@ -15,10 +15,19 @@ def test_checkpoint_inspector_renders_actual_tensor_inventory_as_png():
     assert metadata["tensors"]["attention.in_proj_weight"]["shape"] == [96, 32]
     assert metadata["tensors"]["experts.0.0.weight"]["shape"] == [32, 32]
     assert metadata["normalization"] == "per-tensor symmetric max-absolute"
-    assert metadata["layout"] == "architecture-flow-v21"
+    assert metadata["layout"] == "architecture-flow-v22"
     assert metadata["width"] == 1640
     assert metadata["legend_location"] == "top-right"
     assert metadata["execution_contract_panel"] == {"location": "bottom-left", "bounds": [20, 750, 570, 470]}
+    assert metadata["attention_input_projection"] == {
+        "group_label": "Attention input projections (Q / K / V)",
+        "packed_weight_shape": [96, 32],
+        "segments": {
+            "Q": {"meaning": "Query", "weight_shape": [32, 32], "bias_shape": [32]},
+            "K": {"meaning": "Key", "weight_shape": [32, 32], "bias_shape": [32]},
+            "V": {"meaning": "Value", "weight_shape": [32, 32], "bias_shape": [32]},
+        },
+    }
     assert metadata["bias_alignment"] == "vertical output-row axis"
     assert metadata["sections"][-2:] == ["experts", "output"]
     assert metadata["legend"]["B"] == "bias column; one value per output row"

@@ -161,6 +161,24 @@ def _render_pair(rgb: bytearray, width: int, state: dict[str, torch.Tensor], wei
     return weight_width + _CELL * 2, max(weight_height, state[bias].numel() * _CELL) + _HEADER_HEIGHT
 
 
+def _render_attention_input_projections(rgb: bytearray, width: int, state: dict[str, torch.Tensor], x: int, y: int) -> None:
+    """Render PyTorch's packed Q/K/V input projection as three logical pairs."""
+    group_x, group_y, group_width, group_height = x - 15, y, 210, 650
+    _rectangle(rgb, width, group_x, group_y, group_width, group_height, _EXPERT_BORDER, 1)
+    _centered_text(rgb, width, group_x + group_width // 2, group_y + 10, "Attention input", _LABEL)
+    _centered_text(rgb, width, group_x + group_width // 2, group_y + 32, "projections (Q / K / V)", _LABEL)
+    packed_weight = state["attention.in_proj_weight"]
+    packed_bias = state["attention.in_proj_bias"]
+    for index, (symbol, meaning) in enumerate((("Q", "Query"), ("K", "Key"), ("V", "Value"))):
+        label_y = group_y + 55 + index * 196
+        grid_y = label_y + 27
+        _centered_text(rgb, width, x + 85, label_y, f"{symbol} — {meaning}", _LABEL)
+        weight = packed_weight[index * 32 : (index + 1) * 32]
+        bias = packed_bias[index * 32 : (index + 1) * 32]
+        weight_width, _ = _render_tensor(rgb, width, weight, x, grid_y)
+        _render_tensor(rgb, width, bias, x + weight_width + _CELL, grid_y)
+
+
 def _render_single(rgb: bytearray, width: int, state: dict[str, torch.Tensor], name: str, label: str, x: int, y: int) -> tuple[int, int]:
     tensor_columns = _shape(state[name])[1]
     _centered_text(rgb, width, x + tensor_columns * _CELL // 2, y + 20, label, _LABEL)
@@ -216,7 +234,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
     top_y, flow_y = 40, 110
     _render_single(rgb, width, state, "embedding.weight", "Token embedding", 20, top_y)
     _render_single(rgb, width, state, "position.weight", "Position embedding", 210, top_y)
-    _render_pair(rgb, width, state, "attention.in_proj_weight", "attention.in_proj_bias", "Input projection", 400, top_y)
+    _render_attention_input_projections(rgb, width, state, 400, 30)
     _render_pair(rgb, width, state, "attention.out_proj.weight", "attention.out_proj.bias", "Output projection", 630, top_y)
     _render_pair(rgb, width, state, "norm.weight", "norm.bias", "Norm", 850, top_y)
     _render_pair(rgb, width, state, "router.weight", "router.bias", "Router", 950, top_y)
@@ -226,8 +244,8 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
 
     # The position table is an explicit branch: small flow arrows enter and leave its matrix at the shared tensor centerline.
     _arrow(rgb, width, 185, flow_y, 205, flow_y)
-    _arrow(rgb, width, 375, flow_y, 395, flow_y)
-    _arrow(rgb, width, 590, flow_y, 610, flow_y)
+    _arrow(rgb, width, 375, flow_y, 384, flow_y)
+    _arrow(rgb, width, 600, flow_y, 625, flow_y)
     _arrow(rgb, width, 815, flow_y, 835, flow_y)
     _arrow(rgb, width, 898, flow_y, 918, flow_y)
 
@@ -276,7 +294,7 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
         _text(rgb, width, legend_x + 34, y + 1, label, _LABEL)
 
     metadata = {
-        "format": "crystal-9-tensor-inspector-v21", "source": source.name,
+        "format": "crystal-9-tensor-inspector-v22", "source": source.name,
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "tensor_count": len(state),
         "representation": "decoded inspector; not reconstructable",
         "proposed_deployment_tag": "lewismoten/crystal-9:q4",
@@ -288,8 +306,16 @@ def render_checkpoint_inspector(source: Path) -> tuple[bytes, dict[str, object]]
             "expert": "32 -> 32 SiLU -> 32",
             "public_output": "a-i; ! is invalid/no-move sentinel",
         },
-        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v21",
+        "normalization": "per-tensor symmetric max-absolute", "layout": "architecture-flow-v22",
         "legend_location": "top-right", "execution_contract_panel": {"location": "bottom-left", "bounds": [20, 750, 570, 470]},
+        "attention_input_projection": {
+            "group_label": "Attention input projections (Q / K / V)", "packed_weight_shape": [96, 32],
+            "segments": {
+                "Q": {"meaning": "Query", "weight_shape": [32, 32], "bias_shape": [32]},
+                "K": {"meaning": "Key", "weight_shape": [32, 32], "bias_shape": [32]},
+                "V": {"meaning": "Value", "weight_shape": [32, 32], "bias_shape": [32]},
+            },
+        },
         "bias_alignment": "vertical output-row axis", "sections": ["inputs", "attention", "norm_router", "experts", "output"],
         "legend": {"WEIGHTS": "matrix; rows are output features", "BIAS": "bias column; one value per output row", "B": "bias column; one value per output row"},
         "expert_layout": "five Expert boxes over four Expert boxes; each contains its first and second layer",
