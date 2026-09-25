@@ -884,3 +884,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The transform expands the raw scale stream from 24,726 to 24,728 bytes and produces a **19,056-byte** LZMA scale payload, versus **17,552 bytes** for the accepted canonical stream. With the unchanged 3,178-byte code stream and 39-byte container overhead, its lower-bound artifact is **22,273 bytes**, **1,504 bytes larger** than the accepted 20,769-byte artifact.
 - It is rejected before runtime/module, artifact, or exhaustive policy evaluation because the exact representation fails the primary complete-artifact metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-bitplane-lzma-screen-20260925/report.json`.
 - Decision: **change strategy**. No model process is active. The checksum-bound staged-research distribution remains valid; successor research must define a materially different exact scale hierarchy rather than a further scale-stream entropy transform.
+
+## Rejected INT2 FP8-scale component-stream/LZMA hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-scale-component-stream-lzma-screen`
+
+- A materially distinct, lossless scale-hierarchy screen split every immutable `float8_e4m3fn` scalar-scale byte into exponent and mantissa component streams before LZMA-9, retaining the accepted fixed-permutation bitplane/Zlib code stream unchanged. Accepted F32, INT4, INT3, scalar INT2 proof, and all accepted INT2 transport artifacts remain unchanged.
+- The two component streams contain **49,452** bytes before compression and produce an **18,520-byte** LZMA payload, versus **17,552 bytes** for the accepted canonical 24,726-byte scale stream. With the unchanged 3,178-byte code stream and 39-byte container overhead, its lower-bound artifact is **21,737 bytes**, **968 bytes** larger than the accepted 20,769-byte artifact.
+- It is rejected before runtime/module, artifact, or exhaustive policy evaluation because the exact representation fails the primary complete-artifact metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-component-stream-lzma-screen-20260925/report.json`.
+- Decision: **change strategy**. No model process is active. Component decomposition does not improve this exact scalar hierarchy; a successor must be a materially different exact scale hierarchy, not another generic stream transform.
