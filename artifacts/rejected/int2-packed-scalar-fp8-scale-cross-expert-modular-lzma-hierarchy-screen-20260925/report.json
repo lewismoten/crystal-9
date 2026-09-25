@@ -1,0 +1,31 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-cross-expert-modular-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "lossless modular residuals of corresponding expert tensor scales, then LZMA-9",
+    "storage_efficient": false
+  },
+  "screen": {
+    "tensor_streams": 48,
+    "cross_expert_residual_streams": 32,
+    "canonical_lzma_scale_bytes": 17552,
+    "cross_expert_modular_lzma_scale_bytes": 19016,
+    "lower_bound_container_bytes": 22233,
+    "delta_from_accepted_container_bytes": 1464
+  },
+  "verification": {
+    "cross_expert_modular_stream_reconstructs_exact_scale_stream": true,
+    "source_scale_count_matches_fixed_runtime": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "Corresponding expert tensors are not sufficiently correlated under exact modular residual coding; the candidate exceeds the accepted complete container before decoder-format metadata. No runtime, artifact, or exhaustive policy evaluation was created."
+}
