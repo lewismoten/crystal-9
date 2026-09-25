@@ -1,0 +1,23 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-joint-scale-code-lzma-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "decision": "rejected-before-runtime",
+  "reason": "The candidate cannot improve the accepted complete artifact on its primary representation metric.",
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_type": "float8_e4m3fn",
+    "candidate_representation": "lossless joint FP8-scale and unpacked INT2-symbol LZMA transport",
+    "accepted_representation": "separate LZMA FP8-scale and fixed-permutation bitplane-Zlib INT2-code streams",
+    "accepted_stream_bytes": 20730,
+    "accepted_complete_artifact_bytes": 20769,
+    "candidate_interleaved_stream_bytes": 23500,
+    "candidate_scales_then_symbols_stream_bytes": 21260,
+    "candidate_symbols_then_scales_stream_bytes": 21256,
+    "best_candidate_stream_bytes": 21256,
+    "best_candidate_complete_container_lower_bound_bytes": 21295
+  },
+  "acceptance": null,
+  "notes": "No runtime module, artifact, or exhaustive policy evaluation was created because the best reversible joint stream is 526 bytes larger than the accepted complete artifact before any additional decoder metadata."
+}

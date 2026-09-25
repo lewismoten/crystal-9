@@ -847,3 +847,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2` (**20,769** bytes; SHA-256 `95904590b98741c883bd48c481b39eabe0e05c9615c1f4e56a6d0535252c849f`; payload integrity SHA-256 `58edbad7e20aad586e930c9f2e4a3d3f384318d07aae5b5fd48b74e5c976bc98`). It retains the same 3,178-byte code and 17,552-byte scale streams while reducing the accepted stream-binary artifact from 20,770 to 20,769 bytes.
 - This is an exact compact-container hierarchy-quantization research artifact, not a deployable INT2 release: it retains one FP8 scale per scalar and release-manifest/distribution gates remain absent.
 - Decision: **change strategy**. No model process is active. The selector-elision result is a one-byte format-specific improvement; do not pursue another header/minor-entropy variant. The next candidate must be a materially different exact scale hierarchy or complete-container design and must preserve this accepted artifact.
+
+## Rejected INT2 joint scale/code LZMA hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-joint-scale-code-lzma-screen`
+
+- A bounded, lossless joint-stream hierarchy screen used the immutable FP8 scalar-scale INT2 values from `artifacts-fp32.pt`. It compared LZMA-9 of (a) interleaved FP8-scale/unpacked-INT2-symbol bytes and (b) the two reversible whole-stream concatenation orders against the accepted separate streams.
+- The 24,726-value candidate's best reversible joint stream was symbols-then-scales at **21,256** bytes; scales-then-symbols was 21,260 and interleaving was 23,500. The accepted fixed-permutation transport's separate LZMA-scale plus bitplane-Zlib-code streams total **20,730** bytes and its complete integrity-bound artifact is **20,769** bytes.
+- The best joint-stream lower-bound container is 21,295 bytes before extra decoder metadata: **526 bytes larger** than the accepted artifact. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-joint-scale-code-lzma-screen-20260925/report.json`.
+- No runtime/module, model artifact, or exhaustive policy evaluation was created because this distinct hierarchy failed the primary complete-representation metric. All accepted F32, INT4, INT3, scalar INT2 proof, and INT2 transport artifacts remain unchanged.
+- Decision: **change strategy**. No model process is active. Joint symbol/scale LZMA is screened out; successor research must use a materially different exact hierarchy rather than another generic codec or header variation.
