@@ -1,0 +1,31 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-bitplane-lzma-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact": "artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2",
+    "artifact_sha256": "95904590b98741c883bd48c481b39eabe0e05c9615c1f4e56a6d0535252c849f",
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "code_layout": "accepted fixed-permutation bitplane-zlib code stream, unchanged",
+    "scale_layout": "lossless bitplane transpose of 24726 float8_e4m3fn scalar-scale bytes before LZMA-9",
+    "scale_count": 24726,
+    "raw_scale_bytes": 24726,
+    "transposed_scale_bytes": 24728,
+    "storage_efficient": false
+  },
+  "screen": {
+    "raw_scale_lzma_bytes": 17552,
+    "bitplane_scale_lzma_bytes": 19056,
+    "lower_bound_container_bytes": 22273,
+    "accepted_container_bytes": 20769,
+    "delta_bytes": 1504
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The lossless scale-bitplane transform is 1504 bytes larger than the accepted complete artifact before any new format metadata. No runtime, artifact, or exhaustive policy evaluation was created."
+}
