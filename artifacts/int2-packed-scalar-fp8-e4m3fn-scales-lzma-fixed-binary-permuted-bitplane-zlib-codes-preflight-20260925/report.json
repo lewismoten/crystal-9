@@ -1,0 +1,35 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-fixed-binary-permuted-bitplane-zlib-codes",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "/home/ai/crystal-9/artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-binary-permuted-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-binary-permuted-bitplane-zlib-codes.c9i2",
+  "artifact_bytes": 20790,
+  "artifact_sha256": "5c97b9cda72d1f0cf73a927e94919d356e052611de02cdbf0a82db9ade472113",
+  "integrity_sha256": "6b3b09f45e279ce9c7d1822e784c272c5f5f20ff55bba665cfe17e44d9d26c44",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first in a fixed-architecture binary container",
+    "container": "fixed-architecture-binary",
+    "code_packing": "permutation-selected-bitplane-transposed",
+    "code_permutation": [
+      0,
+      3,
+      1,
+      2
+    ],
+    "code_compression": "zlib-9",
+    "scale_type": "float8_e4m3fn-lzma",
+    "scale_count": 24726,
+    "raw_code_bytes": 6183,
+    "compressed_code_bytes": 3178,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 17552,
+    "storage_efficient": false,
+    "representation": "lossless fixed-architecture binary transport of scalar FP8 scales and INT2 codes; research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}
