@@ -1,0 +1,45 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-global-mode-sparse-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact": "artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2",
+    "artifact_sha256": "95904590b98741c883bd48c481b39eabe0e05c9615c1f4e56a6d0535252c849f",
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "code_layout": "accepted fixed-permutation bitplane-zlib code stream, unchanged",
+    "scale_layout": "lossless global-modal FP8 scale plus exact sparse exception positions and values",
+    "scale_count": 24726,
+    "distinct_scale_values": 78,
+    "global_mode_fp8_byte": 57,
+    "global_mode_count": 1045,
+    "exception_count": 23681,
+    "storage_efficient": false
+  },
+  "screen": {
+    "canonical_lzma_scale_bytes": 17552,
+    "bitmask_exception_hierarchy": {
+      "raw_hierarchy_bytes": 26773,
+      "lzma_hierarchy_bytes": 17876,
+      "lower_bound_container_bytes": 21093,
+      "delta_from_accepted_container_bytes": 324
+    },
+    "delta_varint_exception_hierarchy": {
+      "raw_hierarchy_bytes": 47367,
+      "lzma_hierarchy_bytes": 17984,
+      "lower_bound_container_bytes": 21201,
+      "delta_from_accepted_container_bytes": 432
+    }
+  },
+  "verification": {
+    "bitmask_inverse_matches_exact_scale_stream": true,
+    "delta_varint_inverse_matches_exact_scale_stream": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The modal FP8 value covers only 1,045 of 24,726 scales. Both lossless sparse hierarchies are larger than the accepted complete artifact before new decoder-format metadata. No runtime, artifact, or exhaustive policy evaluation was created."
+}
