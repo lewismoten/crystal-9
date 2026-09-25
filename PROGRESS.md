@@ -761,3 +761,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-permuted-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-permuted-bitplane-zlib-codes.c9i2` (**20,806** bytes; SHA-256 `6564a958b317e7077a22799d69d10a11989cf149ab9ed6f3ee8f830e87cd2f96`; payload integrity SHA-256 `3dce88d8dd5dc1a9a7727fdc2ccbcccea9ee9b37ea9ca42879cbf3ea3a69f18f`). The selected reversible permutation `[0, 3, 1, 2]` reduces the bitplane Zlib code stream from 3,183 to 3,178 bytes and the accepted container from 20,811 to 20,806 bytes.
 - This is an exact compact-container hierarchy-quantization research artifact, not a deployable INT2 release: it retains one FP8 scale per scalar and release-manifest/distribution gates remain absent.
 - Decision: **advance**. No model process is active. The next candidate must establish fresh parity/integrity coverage for a materially distinct complete-container packing improvement or a different scale hierarchy; it must preserve this accepted artifact.
+
+## Rejected INT2 static-arithmetic-code transport screen
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-arithmetic-codes`
+
+- A distinct static-arithmetic coding screen was attempted for the low-bit-first scalar INT2 code symbols while retaining the immutable FP8 scale stream and LZMA scale transport.
+- TDD evidence: a fresh runtime/materialization and complete-container-improvement test was red for the absent module. Minimal implementation established local materialization and integrity behavior, but the required size assertion remained red: **18,658** bytes versus **18,543** bytes for the accepted permutation-bitplane/Zlib baseline in the fixed test fixture.
+- The candidate was therefore removed rather than retained as production code. It has no immutable artifact or exhaustive gate because it failed the primary complete-container-improvement gate before policy evaluation.
+- Decision: **change strategy**. Preserve the accepted 20,806-byte exhaustive artifact. No model process is active; the next candidate must use a materially different hierarchy or packing design, not another generic entropy-code variation.
