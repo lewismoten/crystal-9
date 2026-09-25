@@ -805,3 +805,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - A bounded exact palette-hierarchy screen measured the immutable 24,726-byte scalar-FP8 scale stream's canonical Huffman lower bound. The stream has 78 distinct FP8 values and a Shannon entropy of 5.673440918994552 bits per scale; its optimal Huffman stream requires 140,941 bits (17,618 bytes), before the required palette and canonical code-length metadata.
 - The accepted canonical LZMA scale payload is 17,552 bytes. Even the metadata-free optimal Huffman stream is 66 bytes larger, so this exact hierarchy cannot improve the accepted 20,806-byte complete container. No runtime, artifact, or exhaustive policy evaluation was created; accepted F32, INT4, INT3, scalar INT2 proof, and INT2 transport artifacts remain unchanged.
 - Decision: **change strategy**. No model process is active. Canonical symbol-code scale hierarchies are now screened out; a successor must introduce a materially different exact hierarchy or complete-container design, not another generic entropy transform.
+
+## Rejected INT2 code-conditioned FP8-scale ordering screen
+
+`complete-scalar-group-int2-packed-fp8-scale-code-conditioned-ordering-screen`
+
+- A distinct lossless hierarchy screen used the immutable `artifacts-fp32.pt` scalar-FP8 INT2 values. It stably partitioned the 24,726 FP8 scales by their corresponding decoded INT2 code before LZMA-9, retaining the original scale order within every code partition; decoder reconstruction would use the already-integrity-bound code stream to invert the partition exactly.
+- The code inventory is `[35, 12,162, 0, 12,529]` for symbols `[0, 1, 2, 3]`. All 24 reversible code-partition orders were measured. The best compressed scale payload is **17,588** bytes (order `[0, 1, 2, 3]`), versus **17,552** bytes for the accepted canonical scale order; the worst is 17,592 bytes.
+- It is rejected at the primary complete-representation screen: even the best conditioned scale stream is 36 bytes larger before any required ordering metadata or container changes. No runtime/module, artifact, or exhaustive policy evaluation was created. Accepted F32, INT4, INT3, scalar INT2 proof, and all accepted INT2 transport artifacts remain unchanged.
+- Decision: **change strategy**. No model process is active. Code-conditioned scale ordering does not improve this exact scalar hierarchy; the successor must use a materially different exact scale hierarchy or complete-container design, not another generic entropy transform.
