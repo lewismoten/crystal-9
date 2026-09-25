@@ -739,3 +739,14 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - From immutable `artifacts-fp32.pt`, LZMA produced a 3,852-byte code stream and a 21,480-byte container, versus accepted Zlib's 3,543-byte code stream and 21,171-byte container. The candidate is 309 bytes larger in both measures.
 - Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-lzma-binary-lzma-codes-20260924/report.json`. No exhaustive policy evaluation was run: the candidate cannot improve the accepted artifact on its primary representation metric.
 - Decision: **change strategy**. No model process is active. Do not revisit generic LZMA code compression; a successor must use a distinct hierarchy/packing design and establish fresh parity/integrity coverage before exhaustive evaluation.
+
+## Accepted packed scalar INT2 bitplane-Zlib-code canonical-binary transport candidate
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-bitplane-zlib-codes`
+
+- A distinct code-packing candidate preserves the immutable full scalar FP8-scale INT2 layout and LZMA scale stream, but transposes the low-bit-first two-bit codes into separate low/high bitplanes before Zlib-9 compression. Accepted F32, INT4, INT3, scalar INT2 proof, and all earlier INT2 artifacts remain unchanged.
+- TDD evidence: `tests/test_packed_int2_fp8_scale_lzma_binary_bitplane_zlib_codes.py` and `tests/test_verify_packed_int2_fp8_lzma_binary_bitplane_zlib_codes.py` each failed first for their absent modules, then passed after minimal implementation. Full suite: **182 passed**.
+- The independent exhaustive packed-runtime gate passed: **0 / 294,778** legal-policy misses. The payload integrity gate rejects a one-bit payload flip before either compressed stream is decoded. Immutable report: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-bitplane-zlib-codes-preflight-20260925/report.json`.
+- Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-bitplane-zlib-codes-preflight-20260925/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-binary-bitplane-zlib-codes.c9i2` (**20,811** bytes; SHA-256 `5eeca21ace9671200360e8e6cdb7b45e15f1cd98448912e70e4fa5a3a4766ff2`; payload integrity SHA-256 `624117d4c9190cbc5e00d56d3bd9f8cd3538469d4e3f69a6321bb40c62b88eb6`). Bitplane packing reduces the Zlib code stream from 3,543 to 3,183 bytes and the accepted container from 21,171 to 20,811 bytes.
+- This is an exact compact-container hierarchy-quantization research artifact, not a deployable INT2 release: it retains one FP8 scale per scalar and release-manifest/distribution gates remain absent.
+- Decision: **advance**. No model process is active. The next candidate must establish fresh parity/integrity coverage for a distinct complete-container packing improvement or a different scale hierarchy; it must preserve this accepted artifact.
