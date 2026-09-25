@@ -857,3 +857,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The best joint-stream lower-bound container is 21,295 bytes before extra decoder metadata: **526 bytes larger** than the accepted artifact. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-joint-scale-code-lzma-screen-20260925/report.json`.
 - No runtime/module, model artifact, or exhaustive policy evaluation was created because this distinct hierarchy failed the primary complete-representation metric. All accepted F32, INT4, INT3, scalar INT2 proof, and INT2 transport artifacts remain unchanged.
 - Decision: **change strategy**. No model process is active. Joint symbol/scale LZMA is screened out; successor research must use a materially different exact hierarchy rather than another generic codec or header variation.
+
+## Rejected INT2 tensor-local LZMA scale hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-tensor-local-lzma-scale-hierarchy-screen`
+
+- A bounded, lossless scale-hierarchy screen split the immutable `artifacts-fp32.pt` scalar-FP8 scale bytes at each of the fixed `TinyMoEPolicy` tensor boundaries, then compressed each scale segment independently with LZMA-9. The fixed runtime can derive every boundary, so no tensor table is needed to decode the streams sequentially.
+- The 24,726 exact FP8 scales form 48 tensor streams. Their aggregate compressed size is **21,740** bytes, versus **17,552** bytes for the accepted single canonical LZMA scale stream: **4,188 bytes larger**. Holding the same 3,178-byte integrity-bound code stream and 39-byte fixed container overhead, the candidate lower-bound container is **24,957** bytes, **4,188 bytes** larger than the accepted 20,769-byte artifact.
+- It is rejected before runtime/artifact/exhaustive policy evaluation because the exact hierarchy fails the primary complete-representation metric even without additional version metadata. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-tensor-local-lzma-scale-hierarchy-screen-20260925/report.json`.
+- Decision: **change strategy**. No model process is active. Tensor-local reset points are screened out; successor work must be a materially different exact hierarchy rather than another stream-order or generic-codec variation.

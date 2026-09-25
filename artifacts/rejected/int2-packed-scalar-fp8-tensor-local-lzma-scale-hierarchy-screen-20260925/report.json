@@ -1,0 +1,262 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-tensor-local-lzma-scale-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "decision": "rejected-before-runtime",
+  "reason": "Known tensor boundaries permit no-metadata sequential decoding, but tensor-local LZMA scales cannot improve the accepted complete artifact.",
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_type": "float8_e4m3fn",
+    "candidate_representation": "lossless tensor-local FP8-scale LZMA streams with fixed architecture-derived tensor boundaries",
+    "accepted_representation": "one canonical LZMA FP8-scale stream plus fixed-permutation bitplane-Zlib INT2-code stream",
+    "accepted_compressed_scale_bytes": 17552,
+    "candidate_compressed_scale_bytes": 21740,
+    "scale_payload_delta_bytes": 4188,
+    "accepted_complete_artifact_bytes": 20769,
+    "candidate_complete_container_lower_bound_bytes": 24957
+  },
+  "tensor_streams": [
+    {
+      "name": "embedding.weight",
+      "raw_bytes": 416,
+      "lzma_bytes": 376
+    },
+    {
+      "name": "position.weight",
+      "raw_bytes": 288,
+      "lzma_bytes": 304
+    },
+    {
+      "name": "attention.in_proj_weight",
+      "raw_bytes": 3072,
+      "lzma_bytes": 2372
+    },
+    {
+      "name": "attention.in_proj_bias",
+      "raw_bytes": 96,
+      "lzma_bytes": 156
+    },
+    {
+      "name": "attention.out_proj.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "attention.out_proj.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "norm.weight",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "norm.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "router.weight",
+      "raw_bytes": 288,
+      "lzma_bytes": 300
+    },
+    {
+      "name": "router.bias",
+      "raw_bytes": 9,
+      "lzma_bytes": 68
+    },
+    {
+      "name": "experts.0.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 828
+    },
+    {
+      "name": "experts.0.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.0.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 828
+    },
+    {
+      "name": "experts.0.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.1.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 836
+    },
+    {
+      "name": "experts.1.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.1.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 840
+    },
+    {
+      "name": "experts.1.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.2.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 840
+    },
+    {
+      "name": "experts.2.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.2.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 828
+    },
+    {
+      "name": "experts.2.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.3.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 828
+    },
+    {
+      "name": "experts.3.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.3.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "experts.3.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.4.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 840
+    },
+    {
+      "name": "experts.4.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.4.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 836
+    },
+    {
+      "name": "experts.4.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.5.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 844
+    },
+    {
+      "name": "experts.5.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.5.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 844
+    },
+    {
+      "name": "experts.5.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.6.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 840
+    },
+    {
+      "name": "experts.6.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.6.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 816
+    },
+    {
+      "name": "experts.6.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.7.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "experts.7.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.7.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "experts.7.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.8.0.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "experts.8.0.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "experts.8.2.weight",
+      "raw_bytes": 1024,
+      "lzma_bytes": 832
+    },
+    {
+      "name": "experts.8.2.bias",
+      "raw_bytes": 32,
+      "lzma_bytes": 88
+    },
+    {
+      "name": "output.weight",
+      "raw_bytes": 416,
+      "lzma_bytes": 404
+    },
+    {
+      "name": "output.bias",
+      "raw_bytes": 13,
+      "lzma_bytes": 72
+    }
+  ],
+  "notes": "No runtime, artifact, or exhaustive policy evaluation was created because every scale stream is exact but its aggregate payload exceeds the accepted canonical stream before any additional format/version metadata."
+}
