@@ -789,3 +789,11 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The fixed-width index stream requires 21,636 bytes before its palette, versus the accepted canonical LZMA scale payload's 17,552 bytes. LZMA-9 compresses the index stream to 21,208 bytes, still larger than the accepted scale payload before container metadata.
 - It is rejected at the primary complete-representation screen; no runtime/module, artifact, or exhaustive policy run was created because the exact hierarchy cannot improve the accepted 20,806-byte container. Accepted F32, INT4, INT3, scalar INT2 proof, and all accepted INT2 transports remain unchanged.
 - Decision: **change strategy**. No model process is active. Further work must be a materially different exact scale hierarchy or complete-container design; do not run another generic code/scale entropy variation.
+
+## Rejected INT2 FP8-scale delta-stream screen
+
+`complete-scalar-group-int2-packed-fp8-scale-delta-stream-screen`
+
+- A bounded, reversible scale-order screen measured first-order modular-delta and XOR-delta transforms of the immutable 24,726-byte scalar-FP8 scale stream before LZMA-9. Both retain the exact FP8 scale bytes after inversion and leave the accepted scalar INT2 codes unchanged.
+- Neither transform improves the accepted 17,552-byte canonical LZMA scale payload: modular delta produced 18,948 bytes and XOR delta produced 18,824 bytes. No runtime, artifact, or exhaustive policy evaluation was created because both fail the complete-representation primary metric.
+- Decision: **change strategy**. No model process is active. This eliminates adjacent-scale predictive transforms; the next candidate must be a materially different exact hierarchy or complete-container design, not another generic entropy transform.
