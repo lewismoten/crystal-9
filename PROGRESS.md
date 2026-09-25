@@ -770,3 +770,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - TDD evidence: a fresh runtime/materialization and complete-container-improvement test was red for the absent module. Minimal implementation established local materialization and integrity behavior, but the required size assertion remained red: **18,658** bytes versus **18,543** bytes for the accepted permutation-bitplane/Zlib baseline in the fixed test fixture.
 - The candidate was therefore removed rather than retained as production code. It has no immutable artifact or exhaustive gate because it failed the primary complete-container-improvement gate before policy evaluation.
 - Decision: **change strategy**. Preserve the accepted 20,806-byte exhaustive artifact. No model process is active; the next candidate must use a materially different hierarchy or packing design, not another generic entropy-code variation.
+
+## Rejected INT2 tensor-local code-permutation transport screen
+
+`complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-binary-tensor-permuted-bitplane-zlib-codes`
+
+- A bounded packing screen retained the accepted scalar-FP8 scale stream and bitplane/Zlib code transport, but selected a reversible two-bit code permutation separately for each canonical model tensor rather than once globally.
+- TDD evidence: the fresh runtime/materialization and complete-container-improvement test was red for the absent module. The minimal implementation then passed materialization and payload-bit-flip integrity assertions, but failed its required complete-container-improvement assertion.
+- On the fixed `TinyMoEPolicy(vocab_size=13)` test fixture, the tensor-local table produced a **18,629**-byte container versus **18,534** bytes for the accepted global-permutation baseline: 95 bytes larger. The per-tensor permutation table cost exceeded its compression effect.
+- The candidate module and test were removed rather than retained as production code. No immutable artifact or exhaustive policy evaluation was created because it failed the primary representation gate.
+- Decision: **change strategy**. The accepted 20,806-byte exhaustive artifact remains immutable; no model process is active. A successor requires a materially different scale hierarchy or complete-container design, not another permutation/entropy variation.
