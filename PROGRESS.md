@@ -866,3 +866,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The 24,726 exact FP8 scales form 48 tensor streams. Their aggregate compressed size is **21,740** bytes, versus **17,552** bytes for the accepted single canonical LZMA scale stream: **4,188 bytes larger**. Holding the same 3,178-byte integrity-bound code stream and 39-byte fixed container overhead, the candidate lower-bound container is **24,957** bytes, **4,188 bytes** larger than the accepted 20,769-byte artifact.
 - It is rejected before runtime/artifact/exhaustive policy evaluation because the exact hierarchy fails the primary complete-representation metric even without additional version metadata. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-tensor-local-lzma-scale-hierarchy-screen-20260925/report.json`.
 - Decision: **change strategy**. No model process is active. Tensor-local reset points are screened out; successor work must be a materially different exact hierarchy rather than another stream-order or generic-codec variation.
+
+## Checksum-bound exact INT2 staged-research distribution
+
+`crystal-9-int2-staged-research-distribution-v1`
+
+- The accepted fixed-permutation stream-binary scalar-FP8 artifact is now distributed with its immutable exhaustive acceptance report, fixed runtime-source closure, design, release manifest, README, and a SHA-256 manifest. The distribution explicitly remains a **staged research artifact; not a deployable INT2 release**: it retains one FP8 scale for each of 24,726 parameter scalars.
+- TDD evidence: `tests/test_build_int2_research_distribution.py` was red because the distribution builder was absent, then green after its minimal implementation. Full suite: **195 passed**.
+- The source acceptance remains exactly **0 / 294,778** legal-policy misses in the independent packed runtime. `releases/int2-staged-research-v1/SHA256SUMS` validates all ten distributed payload and provenance files.
+- Decision: **advance**. Behavioral and distribution-integrity gates for this exact scalar-scale research representation are complete. No model process is active. Compactness remains blocked on a materially different exact scale hierarchy; do not revisit generic entropy, header, stream-order, or tensor-reset variants already rejected.
