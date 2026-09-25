@@ -780,3 +780,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - On the fixed `TinyMoEPolicy(vocab_size=13)` test fixture, the tensor-local table produced a **18,629**-byte container versus **18,534** bytes for the accepted global-permutation baseline: 95 bytes larger. The per-tensor permutation table cost exceeded its compression effect.
 - The candidate module and test were removed rather than retained as production code. No immutable artifact or exhaustive policy evaluation was created because it failed the primary representation gate.
 - Decision: **change strategy**. The accepted 20,806-byte exhaustive artifact remains immutable; no model process is active. A successor requires a materially different scale hierarchy or complete-container design, not another permutation/entropy variation.
+
+## Rejected INT2 lossless FP8-scale palette hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-scale-palette-hierarchy-screen`
+
+- A distinct lossless scale-hierarchy screen was measured directly from immutable `artifacts-fp32.pt`: the scalar-FP8 scale stream contains 24,726 bytes but only 78 distinct FP8 values. The candidate would retain the exact 78-byte palette and replace each scale with a fixed 7-bit palette index, preserving every dequantized scalar exactly.
+- The fixed-width index stream requires 21,636 bytes before its palette, versus the accepted canonical LZMA scale payload's 17,552 bytes. LZMA-9 compresses the index stream to 21,208 bytes, still larger than the accepted scale payload before container metadata.
+- It is rejected at the primary complete-representation screen; no runtime/module, artifact, or exhaustive policy run was created because the exact hierarchy cannot improve the accepted 20,806-byte container. Accepted F32, INT4, INT3, scalar INT2 proof, and all accepted INT2 transports remain unchanged.
+- Decision: **change strategy**. No model process is active. Further work must be a materially different exact scale hierarchy or complete-container design; do not run another generic code/scale entropy variation.
