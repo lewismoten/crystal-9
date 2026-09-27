@@ -997,3 +997,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The exact hierarchy has 24,726 FP8 scales, 1,538 root bytes, and 23,188 modular residual bytes. LZMA-9 produces an **18,964-byte** scale payload, versus **17,552 bytes** for the accepted canonical stream. Its lower-bound container is **22,181 bytes** with the unchanged 3,178-byte code stream and 39-byte overhead: **1,412 bytes larger** than the accepted 20,769-byte artifact.
 - It is rejected before runtime, artifact, or exhaustive policy evaluation because the exact representation fails the primary complete-artifact metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-row-modular-lzma-hierarchy-screen-20260927/report.json`.
 - Decision: **change strategy**. No model process is active. Row-local modular prediction is screened out; no next bounded hierarchy is currently specified that is materially distinct from the rejected field/stream, residual, sparse/default, dictionary, reset, or generic entropy variants.
+
+## Rejected INT2 FP8-scale tensor-column-major/LZMA hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-scale-tensor-column-major-lzma-hierarchy-screen`
+
+- A materially distinct, lossless layout screen transposed each fixed parameter tensor's exact `float8_e4m3fn` scalar-scale matrix from row-major to column-major order before a single LZMA-9 stream. The decoder derives all 48 fixed tensor dimensions and exactly inverts each transpose; accepted F32, INT4, INT3, scalar INT2 proof, and every accepted INT2 transport remain immutable.
+- TDD evidence: `tests/test_int2_fp8_scale_row_column_hierarchy_screen.py` was red because its screen module was absent, then green after the minimal exact encoder/inverter implementation. It asserts byte-exact matrix reconstruction and rejects a truncated payload.
+- The exact hierarchy's scale payload is **17,600** bytes, versus **17,552** bytes for the accepted canonical LZMA stream. With the unchanged 3,178-byte code stream and 39-byte fixed overhead, its lower-bound container is **20,817** bytes, **48 bytes larger** than the accepted **20,769**-byte artifact.
+- It is rejected before runtime, artifact, or exhaustive policy evaluation because it fails the primary complete-artifact metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-tensor-column-major-lzma-hierarchy-screen-20260927/report.json`.
+- Decision: **change strategy**. No model process is active. Tensor-local layout transposition is screened out; no next bounded hierarchy is currently specified that is materially distinct from the rejected field/stream, residual, sparse/default, dictionary, reset, generic entropy, and tensor-layout variants.
