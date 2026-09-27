@@ -1,0 +1,32 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-row-modular-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "one exact FP8 root per parameter row plus bytewise modular successor residuals, then LZMA-9",
+    "storage_efficient": false
+  },
+  "screen": {
+    "row_count": 1538,
+    "root_bytes": 1538,
+    "residual_bytes": 23188,
+    "canonical_lzma_scale_bytes": 17552,
+    "row_modular_lzma_scale_bytes": 18964,
+    "lower_bound_container_bytes": 22181,
+    "delta_from_accepted_container_bytes": 1412
+  },
+  "verification": {
+    "row_modular_residual_stream_reconstructs_exact_scale_stream": true,
+    "source_scale_count_matches_fixed_runtime": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The exact row-modular hierarchy does not improve the accepted complete container; no runtime, artifact, or exhaustive policy evaluation was created."
+}
