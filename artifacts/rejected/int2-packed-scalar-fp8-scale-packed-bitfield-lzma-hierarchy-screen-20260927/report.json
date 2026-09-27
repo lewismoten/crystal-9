@@ -1,0 +1,31 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-packed-bitfield-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "lossless packed 5-bit sign/exponent stream plus packed 3-bit mantissa stream, then LZMA-9",
+    "storage_efficient": false
+  },
+  "screen": {
+    "upper_raw_bytes": 24726,
+    "mantissa_raw_bytes": 9273,
+    "canonical_lzma_scale_bytes": 17552,
+    "packed_bitfield_lzma_scale_bytes": 18020,
+    "lower_bound_container_bytes": 21237,
+    "delta_from_accepted_container_bytes": 468
+  },
+  "verification": {
+    "packed_bitfield_stream_reconstructs_exact_scale_stream": true,
+    "source_scale_count_matches_fixed_runtime": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The exact packed-bitfield hierarchy does not improve the accepted complete container; no runtime, artifact, or exhaustive policy evaluation was created."
+}
