@@ -1,0 +1,28 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-expert-block-interleave-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20741,
+    "compressed_scale_bytes": 17524,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "exact FP8 scalar scales from corresponding expert tensors interleaved as fixed 32-byte blocks, with non-expert tensors canonical, then LZMA-9",
+    "block_size": 32,
+    "storage_efficient": false
+  },
+  "screen": {
+    "expert_block_interleave_lzma_scale_bytes": 17528,
+    "lower_bound_container_bytes": 20745,
+    "delta_from_accepted_container_bytes": 4
+  },
+  "verification": {
+    "expert_block_interleave_reconstructs_exact_scale_stream": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The fixed-block expert interleave does not improve the accepted complete container; no runtime, artifact, or exhaustive policy evaluation was created."
+}

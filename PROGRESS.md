@@ -1028,3 +1028,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The exact scale stream LZMA-compresses to **17,532** bytes, versus **17,524** bytes for the accepted corresponding-expert interleave. With the unchanged 3,178-byte code stream and 39-byte fixed overhead, its lower-bound container is **20,749** bytes, **8 bytes larger** than the accepted **20,741**-byte artifact.
 - It is rejected before runtime, artifact, or exhaustive policy evaluation because the exact representation fails the primary complete-artifact metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-far-expert-order-interleave-lzma-hierarchy-screen-20260928/report.json`.
 - Decision: **change strategy**. No model process is active. Fixed far-expert ordering is screened out; a successor must use a materially different exact hierarchy rather than another expert-order permutation or generic entropy transform.
+
+## Rejected INT2 FP8-scale fixed-block expert-interleave/LZMA hierarchy screen
+
+`complete-scalar-group-int2-packed-fp8-scale-expert-block-interleave-lzma-hierarchy-screen`
+
+- A materially distinct, lossless hierarchy retained the accepted corresponding-expert scale scope but changed its arrangement from bytewise expert interleaving to fixed 32-byte blocks from each corresponding expert stream. The inverse reconstructs every original FP8 scalar-scale byte exactly; F32, INT4, INT3, scalar INT2 proof, and accepted INT2 transport artifacts remain immutable.
+- TDD evidence: `tests/test_int2_fp8_scale_expert_block_interleave_hierarchy_screen.py` was red because the screen module was absent, then green after minimal encoder/inverter implementation. The full suite passed: **215 passed**.
+- The 24,726 exact FP8 scales compress to **17,528** bytes, versus **17,524** bytes in the accepted bytewise corresponding-expert interleave. With the unchanged 3,178-byte code stream and 39-byte fixed overhead, its lower-bound container is **20,745** bytes, **4 bytes larger** than the accepted **20,741**-byte artifact.
+- It is rejected before runtime, artifact, or exhaustive policy evaluation because this exact representation fails the complete-container metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-expert-block-interleave-lzma-hierarchy-screen-20260928/report.json`.
+- Decision: **change strategy**. No model process is active. Fixed-block expert interleaving is screened out; no next bounded exact hierarchy is currently specified that is materially distinct from rejected expert arrangement, residual, sparse/default, dictionary, field/stream, tensor-layout, reset, and generic entropy variants.
