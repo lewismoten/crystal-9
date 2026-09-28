@@ -1038,3 +1038,12 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - The 24,726 exact FP8 scales compress to **17,528** bytes, versus **17,524** bytes in the accepted bytewise corresponding-expert interleave. With the unchanged 3,178-byte code stream and 39-byte fixed overhead, its lower-bound container is **20,745** bytes, **4 bytes larger** than the accepted **20,741**-byte artifact.
 - It is rejected before runtime, artifact, or exhaustive policy evaluation because this exact representation fails the complete-container metric. Immutable rejection report: `artifacts/rejected/int2-packed-scalar-fp8-scale-expert-block-interleave-lzma-hierarchy-screen-20260928/report.json`.
 - Decision: **change strategy**. No model process is active. Fixed-block expert interleaving is screened out; no next bounded exact hierarchy is currently specified that is materially distinct from rejected expert arrangement, residual, sparse/default, dictionary, field/stream, tensor-layout, reset, and generic entropy variants.
+
+## INT2 FP8-scale deterministic expert-order hierarchy preflight
+
+`complete-scalar-group-int2-packed-fp8-scale-expert-order-search-lzma-hierarchy-screen`
+
+- A distinct bounded screen retained the accepted corresponding-expert byte interleave but evaluated 64 deterministic reversible expert orders (seed `20260928`), including canonical and far-expert orders. Every candidate exactly reconstructed the immutable 24,726-byte FP8 scale stream; F32, INT4, INT3, scalar INT2 proof, and all accepted transports remain immutable.
+- TDD evidence: `tests/test_int2_fp8_scale_expert_order_search_hierarchy_screen.py` was red for the absent ordering helpers, then green; its `screen()` baseline test was red for the absent runner then green.
+- The best order `[2, 8, 3, 0, 4, 1, 5, 6, 7]` compresses scales to **17,520** bytes, four bytes below the accepted corresponding-expert interleave's 17,524 bytes. With the unchanged 3,178-byte code stream and 39-byte fixed overhead, its lower-bound complete container is **20,737** bytes, four bytes below the accepted 20,741-byte artifact. Immutable preflight: `artifacts/int2-packed-scalar-fp8-scale-expert-order-search-lzma-hierarchy-screen-20260928/report.json`.
+- Decision: **advance**. No model process is active. The next stage is a separate fixed-order runtime candidate using this exact order, with fresh red-to-green fake-materialization parity, payload-integrity, and exhaustive `0 / 294,778` packed-runtime gates before acceptance.
