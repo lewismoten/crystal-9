@@ -1,0 +1,31 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-corresponding-expert-interleave-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20769,
+    "compressed_scale_bytes": 17552,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "exact FP8 scalar scales from corresponding expert tensors interleaved bytewise, with non-expert tensors canonical, then LZMA-9",
+    "storage_efficient": false
+  },
+  "screen": {
+    "expert_count": 9,
+    "corresponding_expert_tensor_groups": 4,
+    "canonical_lzma_scale_bytes": 17552,
+    "expert_interleaved_lzma_scale_bytes": 17524,
+    "lower_bound_container_bytes": 20741,
+    "delta_from_accepted_container_bytes": -28
+  },
+  "verification": {
+    "expert_interleave_reconstructs_exact_scale_stream": true,
+    "source_scale_count_matches_fixed_runtime": true
+  },
+  "decision": "advance-to-runtime",
+  "reason": "The exact corresponding-expert interleave hierarchy improves the accepted complete container and requires a separately parity-tested runtime candidate."
+}

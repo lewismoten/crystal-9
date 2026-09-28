@@ -1,0 +1,36 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-e4m3fn-scales-lzma-expert-interleave-fixed-permutation-stream-binary-bitplane-zlib-codes",
+  "source_checkpoint": "/home/ai/crystal-9/artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "artifact": "/home/ai/crystal-9/artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-interleave-fixed-permutation-stream-binary-bitplane-zlib-codes-preflight-20260928/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-interleave-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2",
+  "artifact_bytes": 20741,
+  "artifact_sha256": "33bf49b5a298ba9b383c029ceb5819368e28fefdf0cc38bf3cac76f12532becd",
+  "integrity_sha256": "fb9af7f12b58ebf93dcec3963f22a1aa0e44d41cc99435345af77fa2b87bc2d2",
+  "quantization": {
+    "bits": 2,
+    "packing": "2-bit scalar codes packed low-bit-first in a fixed-permutation stream binary container",
+    "container": "fixed-permutation-stream-binary",
+    "code_packing": "fixed-permutation-bitplane-transposed",
+    "code_permutation": [
+      0,
+      3,
+      1,
+      2
+    ],
+    "code_compression": "zlib-9",
+    "scale_type": "float8_e4m3fn-lzma",
+    "scale_layout": "corresponding-expert-byte-interleaved",
+    "scale_count": 24726,
+    "raw_code_bytes": 6183,
+    "compressed_code_bytes": 3178,
+    "raw_scale_bytes": 24726,
+    "compressed_scale_bytes": 17524,
+    "storage_efficient": false,
+    "representation": "lossless corresponding-expert interleaved transport of scalar FP8 scales and INT2 codes; research candidate"
+  },
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "decision": "accepted"
+}
