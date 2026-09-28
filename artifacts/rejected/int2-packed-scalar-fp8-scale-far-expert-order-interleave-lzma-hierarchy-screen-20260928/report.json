@@ -1,0 +1,38 @@
+{
+  "layout": "complete-scalar-group-int2-packed-fp8-scale-far-expert-order-interleave-lzma-hierarchy-screen",
+  "source_checkpoint": "artifacts-fp32.pt",
+  "source_checkpoint_sha256": "e5e3aa5eee628c3d3911acabfc9b31eac093f5ec4c8435773537c34312b9399c",
+  "accepted_predecessor": {
+    "artifact_bytes": 20741,
+    "compressed_scale_bytes": 17524,
+    "compressed_code_bytes": 3178,
+    "container_overhead_bytes": 39
+  },
+  "quantization": {
+    "bits": 2,
+    "scale_count": 24726,
+    "scale_layout": "exact corresponding-expert FP8 scalar scales byte-interleaved after fixed far-expert ordering",
+    "expert_order": [
+      0,
+      8,
+      1,
+      7,
+      2,
+      6,
+      3,
+      5,
+      4
+    ],
+    "storage_efficient": false
+  },
+  "screen": {
+    "far_expert_order_lzma_scale_bytes": 17532,
+    "lower_bound_container_bytes": 20749,
+    "delta_from_accepted_container_bytes": 8
+  },
+  "verification": {
+    "expert_order_reconstructs_exact_scale_stream": true
+  },
+  "decision": "rejected-before-runtime",
+  "reason": "The fixed far-expert ordering does not improve the accepted complete container; no runtime, artifact, or exhaustive policy evaluation was created."
+}
