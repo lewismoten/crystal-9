@@ -1,0 +1,32 @@
+{
+  "format": "crystal-9-int2-staged-research-distribution-v1",
+  "classification": "staged research artifact; not a deployable INT2 release",
+  "artifact": "crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-order-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2",
+  "source_acceptance_report": "acceptance-report.json",
+  "acceptance": {
+    "legal_histories": 294778,
+    "policy_misses": 0
+  },
+  "runtime_files": [
+    "runtime/packed_int2_fp8_scale_lzma_expert_order_fixed_permutation_stream_binary_bitplane_zlib_codes.py",
+    "runtime/packed_int2_fp8_scale_lzma_binary_bitplane_zlib_codes.py",
+    "runtime/packed_int2_fp8_scale_lzma_binary_permuted_bitplane_zlib_codes.py",
+    "runtime/packed_int2.py",
+    "runtime/crystal9.py",
+    "runtime/design.json",
+    "runtime/training.py",
+    "runtime/tools/int2_fp8_scale_expert_order_search_hierarchy_screen.py"
+  ],
+  "files": {
+    "crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-order-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2": "127129f02525282ede75a20c6ac8ad41112bfcea443c0fb1bd976d944372dec8",
+    "acceptance-report.json": "5188ba1de9022b801469edc3083cf420cd13511a052c9a942a41bbf2e9082a68",
+    "runtime/packed_int2_fp8_scale_lzma_expert_order_fixed_permutation_stream_binary_bitplane_zlib_codes.py": "4d61d810d47151e6408b198a07cf3727a78199b79de08fa5af0bfc761aaa13f8",
+    "runtime/packed_int2_fp8_scale_lzma_binary_bitplane_zlib_codes.py": "9b2ea01ae09a7db307ff33519373daf91619ccf6308f1dbad3eca5d0a9e5d827",
+    "runtime/packed_int2_fp8_scale_lzma_binary_permuted_bitplane_zlib_codes.py": "fd389ec7986cde4b377b46c712c8d8b3ad115e4ad39b21b2ff48f5bfd78b1be8",
+    "runtime/packed_int2.py": "e0922726d826febb31c9d266e1315f1a01f8a1078953a455221d8d56cfc87607",
+    "runtime/crystal9.py": "d4b95c613e20653a6256a91e66c1ab852173d94deb3124da319e790933bec78d",
+    "runtime/design.json": "011c2afd66bef3f78478dcb02ba4f05edb4a0c03bd4e12f6cb4486808b990af1",
+    "runtime/training.py": "3ca009c2db2c026c2fca428ab474e380ef2e12057f99549348509936daa1a44f",
+    "runtime/tools/int2_fp8_scale_expert_order_search_hierarchy_screen.py": "98194f7b8803d4e50d85853aac17206c6073fe1c479097876ffc634760622446"
+  }
+}

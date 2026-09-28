@@ -1,0 +1,25 @@
+{
+  "project": "crystal-9",
+  "purpose": "A smallest-possible, test-gated MoE tic-tac-toe policy-model experiment.",
+  "architecture": {
+    "hidden_size": 32,
+    "num_attention_heads": 8,
+    "num_key_value_heads": 2,
+    "intermediate_size": 64,
+    "moe_intermediate_size": 32,
+    "num_experts": 9,
+    "num_experts_per_token": 2,
+    "context_window": 8
+  },
+  "vocabulary": {
+    "model": "crystal-9-game-symbols-v1",
+    "tokens": ["<pad>", "<bos>", "<eos>", "!", "a", "b", "c", "d", "e", "f", "g", "h", "i"],
+    "input_symbols": ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+    "invalid_output": "!"
+  },
+  "precision_goal": {
+    "baseline": "fp32",
+    "candidates": ["f16", "q6_k", "q4_k_m", "q3_k", "q2_k", "iq1"],
+    "publication_rule": "A precision is publishable only after its exact target runtime passes the complete policy and invalid-input test gates."
+  }
+}

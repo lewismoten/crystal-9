@@ -1058,3 +1058,13 @@ A separate accepted scale-compressed deployment variant, `crystal-9-packed-int4-
 - Artifact: `artifacts/int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-order-fixed-permutation-stream-binary-bitplane-zlib-codes-preflight-20260928/crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-order-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2` (**20,737** bytes; SHA-256 `127129f02525282ede75a20c6ac8ad41112bfcea443c0fb1bd976d944372dec8`; payload integrity SHA-256 `40c87f4703e1a1e53030124b681fc74f16d3601166acdc289d845c4923aefa18`). The 24,726 FP8 scalar scales compress to **17,520** bytes, reducing the accepted corresponding-expert-interleaved artifact from 20,741 bytes by four bytes.
 - This is an exact compact-container hierarchy-quantization research artifact, not a deployable INT2 release: it retains one FP8 scale per scalar. The checksum-bound staged-research distribution remains the release boundary.
 - Decision: **change strategy**. No model process is active. The bounded expert-order preflight is exhausted into its best fixed order; the next candidate must be a materially different exact hierarchy or complete-container design, not another expert-order variant.
+
+## Checksum-bound exact INT2 staged-research distribution v2
+
+`crystal-9-int2-staged-research-distribution-v2`
+
+- The accepted fixed expert-order transport is now distributed with its immutable exhaustive report and complete fixed-runtime source closure at `releases/int2-staged-research-v2/`. It remains a **staged research artifact; not a deployable INT2 release**: the representation retains one FP8 scale for each of 24,726 parameter scalars.
+- Artifact: `crystal-9-int2-packed-scalar-fp8-e4m3fn-scales-lzma-expert-order-fixed-permutation-stream-binary-bitplane-zlib-codes.c9i2` (**20,737** bytes; SHA-256 `127129f02525282ede75a20c6ac8ad41112bfcea443c0fb1bd976d944372dec8`; payload-integrity SHA-256 `40c87f4703e1a1e53030124b681fc74f16d3601166acdc289d845c4923aefa18`).
+- `SHA256SUMS` validates the artifact, provenance report, eight runtime-closure files, release manifest, and README. The copied runtime independently passed the exhaustive **0 / 294,778** legal-policy gate.
+- TDD evidence: `test_build_distribution_accepts_an_explicit_runtime_closure` was red for the absent explicit closure API, then green after the minimal builder change. Full suite: **221 passed**.
+- Decision: **change strategy**. No model process is active. This packages the current best accepted exact research transport; any next representation candidate must be materially different from expert ordering and the already rejected hierarchy families.

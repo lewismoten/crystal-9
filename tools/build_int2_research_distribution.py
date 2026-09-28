@@ -23,7 +23,13 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build_distribution(root: Path, artifact: Path, report: Path, output: Path) -> dict:
+def build_distribution(
+    root: Path,
+    artifact: Path,
+    report: Path,
+    output: Path,
+    runtime_files: tuple[str, ...] = RUNTIME_FILES,
+) -> dict:
     """Copy an accepted research artifact and its independently checkable runtime closure."""
     root, artifact, report, output = map(Path, (root, artifact, report, output))
     acceptance = json.loads(report.read_text())["acceptance"]
@@ -33,7 +39,7 @@ def build_distribution(root: Path, artifact: Path, report: Path, output: Path) -
         raise FileExistsError(output)
     output.mkdir(parents=True)
     copied = {artifact.name: artifact, "acceptance-report.json": report}
-    copied.update({f"runtime/{name}": root / name for name in RUNTIME_FILES})
+    copied.update({f"runtime/{name}": root / name for name in runtime_files})
     for relative, source in copied.items():
         target = output / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -44,7 +50,7 @@ def build_distribution(root: Path, artifact: Path, report: Path, output: Path) -
         "artifact": artifact.name,
         "source_acceptance_report": "acceptance-report.json",
         "acceptance": acceptance,
-        "runtime_files": [f"runtime/{name}" for name in RUNTIME_FILES],
+        "runtime_files": [f"runtime/{name}" for name in runtime_files],
         "files": {relative: _sha256(output / relative) for relative in copied},
     }
     (output / "release-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
