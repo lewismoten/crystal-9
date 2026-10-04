@@ -18,7 +18,7 @@ The custom vocabulary is intentionally separate from the prior Ollama-compatible
 
 ## Official model releases
 
-[GitHub release workflow](docs/GITHUB_RELEASES.md) packages the accepted, checksum-verified artifacts as individual downloads and a complete ZIP when a `crystal-9-v*` tag is pushed.
+[GitHub release workflow](docs/GITHUB_RELEASES.md) packages the accepted, checksum-verified artifacts as individual downloads and a complete ZIP when a `vX.Y.Z` tag is pushed.
 
 ## Acknowledgments
 

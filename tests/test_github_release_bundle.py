@@ -39,7 +39,7 @@ def test_github_workflow_validates_then_publishes_tagged_release_assets():
     workflow = (ROOT / ".github/workflows/release-official-models.yml").read_text()
 
     assert "workflow_dispatch:" in workflow
-    assert "refs/tags/crystal-9-v" in workflow
+    assert "refs/tags/v" in workflow
     assert "validation/verify_release.py" in workflow
     assert "gh release create" in workflow
     assert "dist/artifacts/*.pt" in workflow

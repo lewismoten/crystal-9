@@ -3,11 +3,11 @@ name: Release official Crystal-9 models
 on:
   push:
     tags:
-      - "crystal-9-v*"
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to create or update (for example crystal-9-v1.0.0)"
+        description: "Release tag to create or update (for example v1.0.0)"
         required: true
         type: string
 
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/crystal-9-v')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
