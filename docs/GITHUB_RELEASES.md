@@ -15,7 +15,7 @@ Before it publishes, GitHub Actions installs CPU-only PyTorch and NumPy, then ru
 After this Forgejo commit is mirrored to GitHub, create and push an annotated tag:
 
 ```sh
-git tag -a v1.0.0 -m "Crystal-9 official models v1.0.0"
+git tag -a v1.0.0 -m "v1.0.0"
 git push github v1.0.0
 ```
 
