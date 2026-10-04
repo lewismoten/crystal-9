@@ -1,0 +1,64 @@
+name: Release official Crystal-9 models
+
+on:
+  push:
+    tags:
+      - "crystal-9-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create or update (for example crystal-9-v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/crystal-9-v')
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install CPU-only validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+          python -m pip install numpy
+
+      - name: Validate the accepted release artifacts
+        working-directory: releases/huggingface-int4-v1
+        run: PYTHONDONTWRITEBYTECODE=1 python validation/verify_release.py
+
+      - name: Build downloadable release assets
+        run: python scripts/build_github_release_bundle.py --output dist
+
+      - name: Publish or refresh the GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets=(
+            dist/crystal-9-accepted-artifacts-v1.zip
+            dist/SHA256SUMS
+            dist/release-manifest.json
+            dist/release-assets-manifest.json
+            dist/artifacts/*.pt
+          )
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "Crystal-9 $RELEASE_TAG" \
+              --notes-file dist/RELEASE_NOTES.md
+          fi
