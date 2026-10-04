@@ -1,5 +1,7 @@
 # Crystal-9
 
+![Crystal-9: Tiny model. Nine possibilities](./docs/social-preview.jpg)
+
 A clean-room experiment toward the smallest truthful local MoE tic-tac-toe policy model.
 
 ## Locked initial design
@@ -29,3 +31,5 @@ CRYSTAL-9 was designed and directed by Lewis Moten. Its code and documentation w
 ```sh
 python3 -m pytest tests/ -q
 ```
+
+![Logo](./docs/logo.jpg)
